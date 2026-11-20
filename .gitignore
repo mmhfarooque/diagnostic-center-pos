@@ -7,8 +7,10 @@ node_modules/
 .env.*.local
 
 # SQLite temporary and journal files
+*.db
 *.db-shm
 *.db-wal
+diagnostic_pos.db
 diagnostic_pos.db-shm
 diagnostic_pos.db-wal
 

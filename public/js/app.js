@@ -54,6 +54,93 @@ const state = {
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
 
+// Web Audio API POS Sound Synthesizer (Zero External Dependencies)
+let audioCtx = null;
+let soundEnabled = localStorage.getItem('pos_sound_enabled') !== 'false';
+
+function playPosSound(type = 'tap') {
+  if (!soundEnabled) return;
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+
+    if (type === 'tap') {
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(400, now + 0.04);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+      osc.start(now);
+      osc.stop(now + 0.04);
+    } else if (type === 'add') {
+      osc.frequency.setValueAtTime(550, now);
+      osc.frequency.exponentialRampToValueAtTime(1150, now + 0.07);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.07);
+      osc.start(now);
+      osc.stop(now + 0.07);
+    } else if (type === 'remove') {
+      osc.frequency.setValueAtTime(450, now);
+      osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.08);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } else if (type === 'cash') {
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+
+      osc.frequency.setValueAtTime(1046.5, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now);
+      osc.stop(now + 0.22);
+
+      osc2.frequency.setValueAtTime(1318.5, now + 0.08);
+      gain2.gain.setValueAtTime(0.15, now + 0.08);
+      gain2.gain.linearRampToValueAtTime(0.001, now + 0.32);
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.32);
+    }
+  } catch (_) {}
+}
+
+function getSpecimenTubeColor(test) {
+  const tube = (test.sample_tube || '').toLowerCase();
+  const spec = (test.specimen || '').toLowerCase();
+  const dept = (test.department_name || '').toLowerCase();
+
+  if (tube.includes('purple') || tube.includes('edta') || spec.includes('edta')) {
+    return { color: '#9333ea', name: 'Purple (EDTA)' };
+  }
+  if (tube.includes('grey') || tube.includes('fluoride') || spec.includes('fluoride')) {
+    return { color: '#64748b', name: 'Grey (Fluoride)' };
+  }
+  if (tube.includes('yellow') || tube.includes('sst') || tube.includes('red') || tube.includes('clot')) {
+    return { color: '#eab308', name: 'Gold (Serum SST)' };
+  }
+  if (tube.includes('blue') || tube.includes('citrate')) {
+    return { color: '#0284c7', name: 'Blue (Citrate)' };
+  }
+  if (spec.includes('urine') || spec.includes('stool') || tube.includes('container') || tube.includes('cup')) {
+    return { color: '#f97316', name: 'Sterile Cup' };
+  }
+  if (dept.includes('radiology') || dept.includes('cardiology') || dept.includes('imaging') || dept.includes('neurology')) {
+    return { color: '#06b6d4', name: 'Imaging / ECG' };
+  }
+  return { color: '#10b981', name: test.specimen || 'Specimen' };
+}
+
 function formatCurrency(amount) {
   const symbol = state.settings.currency_symbol || '৳';
   return `${symbol}${Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -243,18 +330,18 @@ function renderTests() {
           <div>
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
               <span class="pkg-badge">🎁 PACKAGE BUNDLE</span>
-              <span style="font-size: 0.7rem; color: #15803d; font-weight: 700;">Save ${formatCurrency(savings)}</span>
+              <span style="font-size: 0.72rem; color: #15803d; font-weight: 800;">Save ${formatCurrency(savings)}</span>
             </div>
-            <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 2px;">${pkg.name}</div>
-            <div style="font-size: 0.72rem; color: #475569; margin-bottom: 6px;">${pkg.description || ''}</div>
-            <div style="font-size: 0.68rem; color: #64748b; background: white; padding: 4px 6px; border-radius: 4px; border: 1px dashed #cbd5e1; line-height: 1.3;">
-              <strong>Included (${pkg.tests.length}):</strong> ${testNames}
+            <div style="font-size: 0.98rem; font-weight: 800; color: var(--text-main); margin-bottom: 2px;">${pkg.name}</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px;">${pkg.description || ''}</div>
+            <div style="font-size: 0.68rem; color: var(--text-sub); background: var(--bg-surface); padding: 5px 7px; border-radius: 6px; border: 1px dashed var(--border-color); line-height: 1.35;">
+              <strong>Included Tests (${pkg.tests.length}):</strong> ${testNames}
             </div>
           </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 6px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1.5px solid var(--border-light); padding-top: 8px;">
             <div>
-              <span style="font-size: 0.75rem; text-decoration: line-through; color: #94a3b8;">${formatCurrency(pkg.regular_price)}</span>
-              <span style="font-size: 1.1rem; font-weight: 800; color: #15803d; margin-left: 4px;">${formatCurrency(pkg.package_price)}</span>
+              <span style="font-size: 0.75rem; text-decoration: line-through; color: var(--text-muted);">${formatCurrency(pkg.regular_price)}</span>
+              <span style="font-size: 1.15rem; font-weight: 900; color: #15803d; margin-left: 4px;">${formatCurrency(pkg.package_price)}</span>
             </div>
             <button class="btn btn-success btn-sm" onclick="window.posApp.addPackage(${pkg.id})">+ Add Package</button>
           </div>
@@ -269,15 +356,20 @@ function renderTests() {
   const filtered = state.tests.filter(t => {
     if (state.selectedDeptId && t.department_id !== state.selectedDeptId) return false;
     if (search) {
-      return t.name.toLowerCase().includes(search) || t.code.toLowerCase().includes(search);
+      return t.name.toLowerCase().includes(search) || 
+             t.code.toLowerCase().includes(search) ||
+             (t.room_no && t.room_no.toLowerCase().includes(search)) ||
+             (t.specimen && t.specimen.toLowerCase().includes(search));
     }
     return true;
   });
 
   if (filtered.length === 0) {
     grid.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #94a3b8;">
-        No diagnostic tests found matching your search.
+      <div style="grid-column: 1/-1; text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+        <div style="font-size: 1.6rem; margin-bottom: 6px;">🔍</div>
+        <div style="font-weight: 700;">No diagnostic tests found matching "${search}"</div>
+        <button class="btn btn-secondary btn-sm" style="margin-top: 8px;" onclick="$('#test-search-input').value=''; renderTests();">Clear Filter</button>
       </div>
     `;
     return;
@@ -285,8 +377,9 @@ function renderTests() {
 
   grid.innerHTML = filtered.map(t => {
     const inCart = state.cart.some(item => item.id === t.id);
+    const tubeInfo = getSpecimenTubeColor(t);
     return `
-      <div class="test-card ${inCart ? 'in-cart' : ''}" data-id="${t.id}">
+      <div class="test-card ${inCart ? 'in-cart' : ''}" data-id="${t.id}" title="Tap to ${inCart ? 'remove from' : 'add to'} bill">
         <div>
           <div class="test-card-top">
             <span class="test-code">${t.code}</span>
@@ -295,9 +388,12 @@ function renderTests() {
           <div class="test-name">${t.name}</div>
         </div>
         <div class="test-meta">
-          ${t.specimen && t.specimen !== 'None' ? `<span class="specimen-badge">${t.specimen}</span>` : ''}
+          <span class="specimen-pill">
+            <span class="tube-color-dot" style="background: ${tubeInfo.color};"></span>
+            <span>${tubeInfo.name}</span>
+          </span>
           ${t.room_no ? `<span class="room-badge">${t.room_no.split('-')[0].trim()}</span>` : ''}
-          <span style="font-size: 0.65rem; color: #64748b;">⏱ ${t.delivery_hours}h</span>
+          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">⏱ ${t.delivery_hours}h</span>
         </div>
       </div>
     `;
@@ -314,6 +410,7 @@ function renderTests() {
 function addPackageToCart(pkgId) {
   const pkg = state.packages.find(p => p.id === pkgId);
   if (!pkg) return;
+  playPosSound('add');
 
   for (const t of pkg.tests) {
     if (!state.cart.some(c => c.id === t.id)) {
@@ -325,7 +422,7 @@ function addPackageToCart(pkgId) {
   const savings = pkg.regular_price - pkg.package_price;
   state.discountType = 'FLAT';
   state.discountValue = savings;
-  state.discountRemark = `Package Offer: ${pkg.name}`;
+  state.discountRemark = `Bundle Discount: ${pkg.name}`;
 
   $('#discount-type-select').value = 'FLAT';
   $('#discount-val-input').value = savings;
@@ -333,7 +430,7 @@ function addPackageToCart(pkgId) {
   remarkInput.value = state.discountRemark;
   remarkInput.style.display = 'block';
 
-  showToast(`Added ${pkg.name} with ${formatCurrency(savings)} bundle discount!`, 'success');
+  showToast(`Added ${pkg.name} with ${formatCurrency(savings)} savings!`, 'success');
   renderTests();
   renderCart();
 }
@@ -341,8 +438,10 @@ function addPackageToCart(pkgId) {
 function toggleCartItem(testId) {
   const index = state.cart.findIndex(i => i.id === testId);
   if (index > -1) {
+    playPosSound('remove');
     state.cart.splice(index, 1);
   } else {
+    playPosSound('add');
     const test = state.tests.find(t => t.id === testId);
     if (test) state.cart.push(test);
   }
@@ -360,26 +459,61 @@ function renderCart() {
   if (state.cart.length === 0) {
     list.innerHTML = `
       <div class="empty-cart-state">
-        <svg width="44" height="44" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
         </svg>
-        <p>No tests selected yet</p>
-        <span style="font-size: 0.75rem;">Click on any diagnostic test or package to add to bill</span>
+        <p style="font-weight: 700; color: var(--text-main); margin-top: 4px;">Bill is Empty</p>
+        <span style="font-size: 0.72rem; color: var(--text-muted);">Tap tests on left or choose a rush combo below:</span>
+
+        <div class="empty-combos-box">
+          <div class="empty-combos-title">⚡ 1-Tap Diagnostic Combos:</div>
+          <div class="empty-combos-grid">
+            <button type="button" class="btn-combo-add" data-combo="routine">
+              <span>🩸 Routine Health Checkup</span>
+              <strong>৳800</strong>
+            </button>
+            <button type="button" class="btn-combo-add" data-combo="diabetic">
+              <span>☕ Diabetic Duo (FBS + HbA1c + Creat)</span>
+              <strong>৳1,300</strong>
+            </button>
+            <button type="button" class="btn-combo-add" data-combo="fever">
+              <span>🦟 Dengue & Fever Panel</span>
+              <strong>৳1,100</strong>
+            </button>
+            <button type="button" class="btn-combo-add" data-combo="cardiac">
+              <span>🫀 Cardiac Baseline (Lipid + ECG)</span>
+              <strong>৳1,400</strong>
+            </button>
+          </div>
+        </div>
       </div>
     `;
+
+    list.querySelectorAll('.btn-combo-add').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const combo = btn.getAttribute('data-combo');
+        loadComboBundle(combo);
+      });
+    });
   } else {
-    list.innerHTML = state.cart.map(item => `
-      <div class="cart-item">
-        <div>
-          <div class="cart-item-title">${item.name}</div>
-          <div class="cart-item-dept">${item.code} • ${item.department_name}</div>
+    list.innerHTML = state.cart.map(item => {
+      const tubeInfo = getSpecimenTubeColor(item);
+      return `
+        <div class="cart-item">
+          <div>
+            <div class="cart-item-title">${item.name}</div>
+            <div class="cart-item-dept">
+              <span class="tube-color-dot" style="background: ${tubeInfo.color}; display: inline-block; vertical-align: middle; margin-right: 3px;"></span>
+              ${item.code} • ${item.department_name}
+            </div>
+          </div>
+          <div class="cart-item-actions">
+            <span class="cart-item-price">${formatCurrency(item.price)}</span>
+            <button class="btn-remove-item" data-id="${item.id}" title="Remove test">✕</button>
+          </div>
         </div>
-        <div class="cart-item-actions">
-          <span class="cart-item-price">${formatCurrency(item.price)}</span>
-          <button class="btn-remove-item" data-id="${item.id}" title="Remove test">✕</button>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     list.querySelectorAll('.btn-remove-item').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -415,20 +549,23 @@ function renderCart() {
     }
   }
 
+  // Render Dynamic Quick Cash Buttons based on Net Amount
+  renderQuickCashButtons(calc.netAmount);
+
   const dueRow = $('#due-display-row');
   if (dueRow) {
     if (calc.due > 0) {
       dueRow.innerHTML = `
         <div class="due-alert-box" style="width: 100%;">
-          <span>⚠ Due Remaining:</span>
+          <span>⚠️ Due Remaining:</span>
           <strong>${formatCurrency(calc.due)}</strong>
         </div>
       `;
       dueRow.style.display = 'block';
     } else if (calc.change > 0) {
       dueRow.innerHTML = `
-        <div style="background: #d1fae5; border: 1px solid #a7f3d0; color: #065f46; padding: 0.4rem 0.65rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: flex; justify-content: space-between; width: 100%;">
-          <span>Return Change:</span>
+        <div style="background: #d1fae5; border: 1.5px solid #10b981; color: #065f46; padding: 0.45rem 0.75rem; border-radius: 6px; font-size: 0.85rem; font-weight: 800; display: flex; justify-content: space-between; width: 100%;">
+          <span>💵 Return Change:</span>
           <strong>${formatCurrency(calc.change)}</strong>
         </div>
       `;
@@ -442,10 +579,80 @@ function renderCart() {
   if (completeBtn) {
     completeBtn.disabled = state.cart.length === 0;
   }
+  const completeA4Btn = $('#btn-complete-a4');
+  if (completeA4Btn) {
+    completeA4Btn.disabled = state.cart.length === 0;
+  }
+}
+
+function renderQuickCashButtons(netAmount) {
+  const container = $('#quick-cash-container');
+  if (!container) return;
+
+  if (netAmount <= 0) {
+    container.innerHTML = `
+      <button type="button" class="btn-quick-cash" data-val="exact">Exact Net</button>
+      <button type="button" class="btn-quick-cash" data-val="500">৳500</button>
+      <button type="button" class="btn-quick-cash" data-val="1000">৳1,000</button>
+      <button type="button" class="btn-quick-cash" data-val="2000">৳2,000</button>
+    `;
+  } else {
+    const exact = netAmount;
+    let next50 = Math.ceil(netAmount / 50) * 50;
+    if (next50 === exact) next50 += 50;
+    let next100 = Math.ceil(netAmount / 100) * 100;
+    if (next100 <= next50) next100 = next50 + 50;
+    let next500 = Math.ceil(netAmount / 500) * 500;
+    if (next500 <= next100) next500 = next100 + 500;
+    let next1000 = Math.ceil(netAmount / 1000) * 1000;
+    if (next1000 <= next500) next1000 = next500 + 500;
+
+    container.innerHTML = `
+      <button type="button" class="btn-quick-cash" data-val="exact">Exact ৳${exact}</button>
+      <button type="button" class="btn-quick-cash" data-val="${next100}">৳${next100}</button>
+      <button type="button" class="btn-quick-cash" data-val="${next500}">৳${next500}</button>
+      <button type="button" class="btn-quick-cash" data-val="${next1000}">৳${next1000}</button>
+    `;
+  }
+
+  container.querySelectorAll('.btn-quick-cash').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playPosSound('tap');
+      const val = btn.getAttribute('data-val');
+      state.paidAmount = val === 'exact' ? netAmount : Number(val);
+      $('#paid-amount-input').value = state.paidAmount;
+      renderCart();
+    });
+  });
+}
+
+function loadComboBundle(comboType) {
+  playPosSound('add');
+  let codes = [];
+  if (comboType === 'routine') {
+    codes = ['CBC-01', 'RBS-01', 'URINE-01'];
+  } else if (comboType === 'diabetic') {
+    codes = ['FBS-01', 'HBA1C-01', 'CREAT-01'];
+  } else if (comboType === 'fever') {
+    codes = ['CBC-01', 'DENG-01', 'URINE-01'];
+  } else if (comboType === 'cardiac') {
+    codes = ['LIPID-01', 'ECG-01'];
+  }
+
+  codes.forEach(c => {
+    const t = state.tests.find(item => item.code === c);
+    if (t && !state.cart.some(i => i.id === t.id)) {
+      state.cart.push(t);
+    }
+  });
+
+  showToast(`Loaded ${comboType.toUpperCase()} combo package!`, 'success');
+  renderTests();
+  renderCart();
 }
 
 // Complete POS Checkout
-async function completeCheckout() {
+async function completeCheckout(requestedPrintMode = 'thermal') {
   const calc = calculateBilling();
   if (state.cart.length === 0) {
     showToast('Please add at least one test to bill', 'error');
@@ -458,6 +665,7 @@ async function completeCheckout() {
   const ageUnit = $('#patient-age-unit')?.value || 'Y';
   const gender = $('#patient-gender')?.value || 'MALE';
   const address = $('#patient-address')?.value.trim() || '';
+  const notes = $('#patient-clinical-notes')?.value.trim() || '';
 
   if (!name) {
     showToast('Please enter patient name', 'error');
@@ -489,7 +697,7 @@ async function completeCheckout() {
     paid_amount: calc.paid,
     payment_method: state.paymentMethod,
     payment_reference: state.paymentReference,
-    notes: state.notes
+    notes: notes || state.notes
   };
 
   try {
@@ -498,6 +706,7 @@ async function completeCheckout() {
       body: JSON.stringify(payload)
     });
 
+    playPosSound('cash');
     showToast(`Invoice ${invoice.invoice_no} created successfully!`, 'success');
 
     api('/api/stats').then(st => {
@@ -506,6 +715,7 @@ async function completeCheckout() {
     });
 
     resetPosForm();
+    state.printMode = requestedPrintMode;
     openPrintModal(invoice.id);
   } catch (err) {}
 }
@@ -524,13 +734,20 @@ function resetPosForm() {
   $('#patient-name').value = '';
   $('#patient-phone').value = '';
   $('#patient-age').value = '';
-  $('#patient-address').value = '';
+  if ($('#patient-address')) $('#patient-address').value = '';
+  if ($('#patient-clinical-notes')) $('#patient-clinical-notes').value = '';
   $('#discount-val-input').value = '';
   $('#discount-remark-input').value = '';
   $('#urgent-toggle').checked = false;
   $('#paid-amount-input').value = '';
   $('#payment-ref-input').value = '';
   $('#discount-remark-input').style.display = 'none';
+  if ($('#patient-match-pill')) $('#patient-match-pill').style.display = 'none';
+
+  // Reset discount chips
+  $$('.btn-disc-chip').forEach(b => b.classList.remove('active'));
+  const noneChip = document.querySelector('.btn-disc-chip[data-type="NONE"]');
+  if (noneChip) noneChip.classList.add('active');
 
   renderTests();
   renderCart();
@@ -1280,16 +1497,133 @@ async function loadReports() {
   }
 }
 
+// Setup Theme, Sound FX & Extra Tools
+function setupThemeAndSound() {
+  const savedTheme = localStorage.getItem('pos_theme') || 'light';
+  if (savedTheme === 'dark') {
+    document.body.classList.add('theme-dark');
+    const icon = $('#theme-icon');
+    if (icon) icon.textContent = '☀️';
+  }
+
+  $('#btn-toggle-theme')?.addEventListener('click', () => {
+    playPosSound('tap');
+    const isDark = document.body.classList.toggle('theme-dark');
+    localStorage.setItem('pos_theme', isDark ? 'dark' : 'light');
+    const icon = $('#theme-icon');
+    if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+    showToast(isDark ? 'Night Shift Mode (OLED Dark) Enabled' : 'Day Shift Mode Enabled', 'success');
+  });
+
+  const soundBtn = $('#btn-toggle-sound');
+  const soundIcon = $('#sound-icon');
+  if (soundIcon) soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+
+  soundBtn?.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    localStorage.setItem('pos_sound_enabled', soundEnabled ? 'true' : 'false');
+    if (soundIcon) soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+    if (soundEnabled) playPosSound('tap');
+    showToast(soundEnabled ? 'Touch Audio Feedback ON' : 'Audio Feedback Muted', 'success');
+  });
+
+  $('#btn-open-shift-handover')?.addEventListener('click', () => {
+    playPosSound('tap');
+    openShiftModal();
+  });
+
+  $('#btn-toggle-more-patient')?.addEventListener('click', () => {
+    playPosSound('tap');
+    const details = $('#patient-more-details');
+    if (!details) return;
+    const isHidden = details.style.display === 'none';
+    details.style.display = isHidden ? 'flex' : 'none';
+    $('#btn-toggle-more-patient').textContent = isHidden ? '▲ Hide' : '+ Details';
+  });
+}
+
+function setupRushShelf() {
+  $$('.rush-item-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = btn.getAttribute('data-code');
+      const test = state.tests.find(t => t.code === code);
+      if (test) {
+        toggleCartItem(test.id);
+      } else {
+        showToast(`Test ${code} not found in catalog`, 'error');
+      }
+    });
+  });
+}
+
+function setupDiscountChips() {
+  $$('.btn-disc-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playPosSound('tap');
+      $$('.btn-disc-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const type = btn.getAttribute('data-type');
+      const val = btn.getAttribute('data-val');
+
+      if (type === 'NONE') {
+        state.discountType = 'NONE';
+        state.discountValue = 0;
+        state.discountRemark = '';
+      } else if (type === 'PERCENT') {
+        state.discountType = 'PERCENT';
+        state.discountValue = Number(val);
+        state.discountRemark = `${val}% Concession`;
+      } else if (type === 'FLAT') {
+        state.discountType = 'FLAT';
+        state.discountValue = Number(val);
+        state.discountRemark = `Flat ৳${val} Concession`;
+      } else if (type === 'DOCTOR') {
+        const doc = state.doctors.find(d => d.id === state.selectedDoctorId);
+        const pct = doc?.commission_percent > 0 ? doc.commission_percent : 10;
+        state.discountType = 'PERCENT';
+        state.discountValue = pct;
+        state.discountRemark = `Doctor Referral Concession (${doc?.name || 'Doctor'})`;
+      }
+
+      if ($('#discount-type-select')) $('#discount-type-select').value = state.discountType;
+      if ($('#discount-val-input')) $('#discount-val-input').value = state.discountValue || '';
+      const remInput = $('#discount-remark-input');
+      if (remInput) {
+        remInput.value = state.discountRemark;
+        remInput.style.display = state.discountType !== 'NONE' ? 'block' : 'none';
+      }
+
+      renderCart();
+    });
+  });
+}
+
 // Global App Initialization
 function setupEventListeners() {
+  setupThemeAndSound();
+  setupRushShelf();
+  setupDiscountChips();
+
   $$('.nav-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      playPosSound('tap');
       const tab = btn.getAttribute('data-tab');
       switchTab(tab);
     });
   });
 
-  $('#test-search-input')?.addEventListener('input', () => {
+  const searchInput = $('#test-search-input');
+  const clearSearchBtn = $('#btn-clear-search');
+  searchInput?.addEventListener('input', () => {
+    if (clearSearchBtn) {
+      clearSearchBtn.style.display = searchInput.value ? 'block' : 'none';
+    }
+    renderTests();
+  });
+  clearSearchBtn?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
     renderTests();
   });
 
@@ -1297,11 +1631,34 @@ function setupEventListeners() {
   $('#patient-phone')?.addEventListener('input', (e) => {
     clearTimeout(phoneTimeout);
     const q = e.target.value.trim();
+    const matchPill = $('#patient-match-pill');
     if (q.length >= 3) {
       phoneTimeout = setTimeout(async () => {
         const matches = await api(`/api/patients/search?q=${encodeURIComponent(q)}`);
         const dropdown = $('#patient-autocomplete');
         if (matches.length > 0) {
+          const first = matches[0];
+          if (matchPill) {
+            matchPill.innerHTML = `
+              <span>✨ Found: <strong>${first.name}</strong> (${first.gender}, ${first.age}${first.age_unit})</span>
+              <span class="badge" style="background: #10b981; color: white; padding: 2px 6px;">Tap to Fill</span>
+            `;
+            matchPill.style.display = 'flex';
+            matchPill.onclick = () => {
+              playPosSound('add');
+              state.patient = first;
+              $('#patient-name').value = first.name;
+              $('#patient-phone').value = first.phone;
+              $('#patient-age').value = first.age;
+              $('#patient-age-unit').value = first.age_unit;
+              $('#patient-gender').value = first.gender;
+              if ($('#patient-address')) $('#patient-address').value = first.address || '';
+              matchPill.style.display = 'none';
+              dropdown.style.display = 'none';
+              showToast(`Autofilled patient profile: ${first.name}`, 'success');
+            };
+          }
+
           dropdown.innerHTML = matches.map(p => `
             <div class="autocomplete-item" data-id="${p.id}">
               <div>
@@ -1315,6 +1672,7 @@ function setupEventListeners() {
 
           dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
             item.addEventListener('click', () => {
+              playPosSound('add');
               const pId = Number(item.getAttribute('data-id'));
               const selected = matches.find(m => m.id === pId);
               if (selected) {
@@ -1324,17 +1682,20 @@ function setupEventListeners() {
                 $('#patient-age').value = selected.age;
                 $('#patient-age-unit').value = selected.age_unit;
                 $('#patient-gender').value = selected.gender;
-                $('#patient-address').value = selected.address || '';
+                if ($('#patient-address')) $('#patient-address').value = selected.address || '';
                 dropdown.style.display = 'none';
+                if (matchPill) matchPill.style.display = 'none';
               }
             });
           });
         } else {
           dropdown.style.display = 'none';
+          if (matchPill) matchPill.style.display = 'none';
         }
       }, 250);
     } else {
       $('#patient-autocomplete').style.display = 'none';
+      if (matchPill) matchPill.style.display = 'none';
     }
   });
 
@@ -1370,6 +1731,7 @@ function setupEventListeners() {
   // Touch Gender Selection
   $$('.btn-gender-touch').forEach(btn => {
     btn.addEventListener('click', () => {
+      playPosSound('tap');
       $$('.btn-gender-touch').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const g = btn.getAttribute('data-gender');
@@ -1381,6 +1743,7 @@ function setupEventListeners() {
   // Touch On-Screen Numpad Handlers
   $$('.btn-touch-keypad').forEach(btn => {
     btn.addEventListener('click', () => {
+      playPosSound('tap');
       const targetId = btn.getAttribute('data-target');
       const targetInput = $(`#${targetId}`);
       if (!targetInput) return;
@@ -1393,6 +1756,7 @@ function setupEventListeners() {
 
   $$('.btn-num-key').forEach(btn => {
     btn.addEventListener('click', () => {
+      playPosSound('tap');
       const val = btn.getAttribute('data-val');
       const display = $('#numpad-display');
       display.value += val;
@@ -1404,6 +1768,7 @@ function setupEventListeners() {
   });
 
   $('#btn-numpad-back')?.addEventListener('click', () => {
+    playPosSound('tap');
     const display = $('#numpad-display');
     display.value = display.value.slice(0, -1);
     if (state.numpadTargetInput) {
@@ -1413,6 +1778,7 @@ function setupEventListeners() {
   });
 
   $('#btn-numpad-clear')?.addEventListener('click', () => {
+    playPosSound('tap');
     $('#numpad-display').value = '';
     if (state.numpadTargetInput) {
       state.numpadTargetInput.value = '';
@@ -1421,17 +1787,20 @@ function setupEventListeners() {
   });
 
   $('#btn-numpad-done')?.addEventListener('click', () => {
+    playPosSound('tap');
     $('#numpad-modal').style.display = 'none';
   });
 
   // Operator PIN Pad Handlers
   $('#operator-header-pill')?.addEventListener('click', () => {
+    playPosSound('tap');
     $('#operator-pin-input').value = '';
     $('#operator-modal').style.display = 'flex';
   });
 
   $$('.btn-quick-operator').forEach(btn => {
     btn.addEventListener('click', () => {
+      playPosSound('tap');
       const pin = btn.getAttribute('data-pin');
       $('#operator-pin-input').value = pin;
       verifyAndLoginOperator(pin);
@@ -1440,6 +1809,7 @@ function setupEventListeners() {
 
   $$('.btn-pin-digit').forEach(btn => {
     btn.addEventListener('click', () => {
+      playPosSound('tap');
       const val = btn.getAttribute('data-val');
       const pinInput = $('#operator-pin-input');
       if (pinInput.value.length < 6) {
@@ -1452,34 +1822,40 @@ function setupEventListeners() {
   });
 
   $('#btn-pin-clear')?.addEventListener('click', () => {
+    playPosSound('tap');
     $('#operator-pin-input').value = '';
   });
 
   $('#btn-pin-back')?.addEventListener('click', () => {
+    playPosSound('tap');
     const pinInput = $('#operator-pin-input');
     pinInput.value = pinInput.value.slice(0, -1);
   });
 
   $('#btn-submit-pin-login')?.addEventListener('click', () => {
+    playPosSound('tap');
     const pin = $('#operator-pin-input').value.trim();
     if (pin) verifyAndLoginOperator(pin);
   });
 
   $('#urgent-toggle')?.addEventListener('change', (e) => {
+    playPosSound('tap');
     state.urgent = e.target.checked;
     renderCart();
   });
 
-  $$('.btn-pay-method').forEach(btn => {
+  // Branded Payment Buttons (Cash, bKash, Nagad, Card)
+  $$('.btn-pay-brand').forEach(btn => {
     btn.addEventListener('click', () => {
-      $$('.btn-pay-method').forEach(b => b.classList.remove('active'));
+      playPosSound('tap');
+      $$('.btn-pay-brand').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       state.paymentMethod = btn.getAttribute('data-method');
       const refInput = $('#payment-ref-input');
       if (state.paymentMethod !== 'CASH') {
-        refInput.placeholder = `Transaction / Trx ID (${state.paymentMethod})`;
+        refInput.placeholder = `Trx ID / Slip Ref (${state.paymentMethod})`;
       } else {
-        refInput.placeholder = 'Remarks / Note';
+        refInput.placeholder = 'Optional';
       }
     });
   });
@@ -1493,24 +1869,13 @@ function setupEventListeners() {
     renderCart();
   });
 
-  $$('.btn-quick-cash').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const val = btn.getAttribute('data-val');
-      const calc = calculateBilling();
-      if (val === 'exact') {
-        state.paidAmount = calc.netAmount;
-      } else {
-        state.paidAmount = Number(val);
-      }
-      $('#paid-amount-input').value = state.paidAmount;
-      renderCart();
-    });
-  });
-
-  $('#btn-complete-pos')?.addEventListener('click', completeCheckout);
+  // Dual Checkout Buttons
+  $('#btn-complete-pos')?.addEventListener('click', () => completeCheckout('thermal'));
+  $('#btn-complete-a4')?.addEventListener('click', () => completeCheckout('a4'));
 
   $('#btn-clear-cart')?.addEventListener('click', () => {
-    if (confirm('Clear current selected tests?')) {
+    playPosSound('tap');
+    if (confirm('Clear current selected tests from patient bill?')) {
       state.cart = [];
       renderTests();
       renderCart();

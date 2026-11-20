@@ -45,11 +45,27 @@
 
     <!-- Header Stats & Clock -->
     <div class="header-right">
-      <div id="operator-header-pill" class="operator-badge" title="Tap to switch operator / login">
+      <!-- Sound FX Toggle -->
+      <button type="button" id="btn-toggle-sound" class="btn-header-tool" title="Toggle Touch Audio Feedback">
+        <span id="sound-icon">🔊</span>
+      </button>
+
+      <!-- Night Shift / Dark Theme Switcher -->
+      <button type="button" id="btn-toggle-theme" class="btn-header-tool" title="Toggle Day/Night Shift Mode">
+        <span id="theme-icon">🌙</span>
+      </button>
+
+      <!-- Cashier Shift Handover Trigger -->
+      <button type="button" id="btn-open-shift-handover" class="btn-header-shift" title="Close Cashier Shift & Print Handover Slip">
+        <span>🔒 Shift Handover</span>
+      </button>
+
+      <!-- Operator PIN Badge -->
+      <div id="operator-header-pill" class="operator-badge" title="Tap to switch counter operator / PIN login">
         <span class="operator-avatar" id="operator-avatar-initial">R</span>
         <div>
-          <div id="operator-name-display" style="font-size: 0.78rem; line-height: 1.1;">Rehana (Cashier)</div>
-          <div id="operator-role-display" style="font-size: 0.65rem; color: #0284c7;">Operator • PIN: 1234</div>
+          <div id="operator-name-display" style="font-size: 0.78rem; line-height: 1.1; font-weight: 700;">Rehana (Cashier)</div>
+          <div id="operator-role-display" style="font-size: 0.65rem; color: #0284c7;">Counter 1 • PIN: 1234</div>
         </div>
         <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 2px;">⇄</span>
       </div>
@@ -64,192 +80,282 @@
     <!-- 1. POS Billing View -->
     <div id="tab-view-pos" class="tab-content pos-desk">
       
-      <!-- Left Desk: Patient Info & Catalog -->
+      <!-- Left Desk: Patient Info, Rush Rack & Catalog -->
       <div class="left-desk">
         
-        <!-- Patient Information Card -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>
-              Patient Information & Referring Doctor
-            </span>
-            <button class="btn btn-secondary btn-sm" id="btn-open-new-doctor-modal">+ Add Doctor</button>
-          </div>
-          <div class="card-body">
-            <div class="patient-form-grid">
-              
-              <!-- Mobile Phone with Autocomplete -->
-              <div class="form-group" style="position: relative;">
-                <label style="display: flex; justify-content: space-between;">
-                  <span>Mobile Number *</span>
-                  <button type="button" class="btn btn-secondary btn-sm btn-touch-keypad" data-target="patient-phone" style="padding: 1px 6px; font-size: 0.7rem;">🔢 Keypad</button>
-                </label>
-                <input type="tel" id="patient-phone" class="form-control" placeholder="e.g. 017XXXXXXXX" autocomplete="off">
+        <!-- Express Patient Bar (Tactile, Compact & Fast) -->
+        <div class="patient-intake-card">
+          <div class="intake-main-row">
+            
+            <!-- Mobile Phone with Quick Keypad & Floating Match -->
+            <div class="intake-field phone-field">
+              <label>
+                <span>Mobile Phone *</span>
+                <button type="button" class="btn-touch-keypad-mini btn-touch-keypad" data-target="patient-phone">🔢 Pad</button>
+              </label>
+              <div class="input-phone-wrap">
+                <input type="tel" id="patient-phone" class="form-control-pos" placeholder="017XXXXXXXX" autocomplete="off">
                 <div id="patient-autocomplete" class="autocomplete-dropdown" style="display: none;"></div>
               </div>
-
-              <!-- Full Name -->
-              <div class="form-group">
-                <label>Patient Full Name *</label>
-                <input type="text" id="patient-name" class="form-control" placeholder="Full name">
-              </div>
-
-              <!-- Age & Unit -->
-              <div class="form-group">
-                <label style="display: flex; justify-content: space-between;">
-                  <span>Age & Unit</span>
-                  <button type="button" class="btn btn-secondary btn-sm btn-touch-keypad" data-target="patient-age" style="padding: 1px 6px; font-size: 0.7rem;">🔢</button>
-                </label>
-                <div style="display: flex; gap: 4px;">
-                  <input type="number" id="patient-age" class="form-control" placeholder="Age" min="0" max="130" style="flex: 2;">
-                  <select id="patient-age-unit" class="form-control" style="flex: 1.2;">
-                    <option value="Y">Yrs</option>
-                    <option value="M">Mths</option>
-                    <option value="D">Days</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Touch Gender Selector -->
-              <div class="form-group">
-                <label>Gender (1-Tap)</label>
-                <input type="hidden" id="patient-gender" value="MALE">
-                <div class="touch-gender-group">
-                  <button type="button" class="btn-gender-touch active" data-gender="MALE">👨 Male</button>
-                  <button type="button" class="btn-gender-touch" data-gender="FEMALE">👩 Female</button>
-                  <button type="button" class="btn-gender-touch" data-gender="CHILD">👶 Child</button>
-                </div>
-              </div>
-
+              <div id="patient-match-pill" class="patient-match-pill" style="display: none;"></div>
             </div>
 
-            <!-- Address & Doctor Row -->
-            <div style="display: grid; grid-template-columns: 1.5fr 2fr; gap: 0.75rem; margin-top: 0.75rem;">
-              <div class="form-group">
-                <label>Patient Address</label>
-                <input type="text" id="patient-address" class="form-control" placeholder="Area / District / Ward">
-              </div>
-              <div class="form-group">
-                <label>Referred By Doctor (Commission Tracked)</label>
-                <select id="doctor-select" class="form-control"></select>
+            <!-- Full Name -->
+            <div class="intake-field name-field">
+              <label>Patient Full Name *</label>
+              <input type="text" id="patient-name" class="form-control-pos" placeholder="Patient name">
+            </div>
+
+            <!-- Age & Unit -->
+            <div class="intake-field age-field">
+              <label>
+                <span>Age</span>
+                <button type="button" class="btn-touch-keypad-mini btn-touch-keypad" data-target="patient-age">🔢</button>
+              </label>
+              <div class="age-unit-wrap">
+                <input type="number" id="patient-age" class="form-control-pos" placeholder="Age" min="0" max="130">
+                <select id="patient-age-unit" class="select-pos">
+                  <option value="Y">Yrs</option>
+                  <option value="M">Mths</option>
+                  <option value="D">Days</option>
+                </select>
               </div>
             </div>
 
+            <!-- 1-Tap Gender Selector -->
+            <div class="intake-field gender-field">
+              <label>Gender (1-Tap)</label>
+              <input type="hidden" id="patient-gender" value="MALE">
+              <div class="touch-gender-group">
+                <button type="button" class="btn-gender-touch active" data-gender="MALE">👨 Male</button>
+                <button type="button" class="btn-gender-touch" data-gender="FEMALE">👩 Female</button>
+                <button type="button" class="btn-gender-touch" data-gender="CHILD">👶 Child</button>
+              </div>
+            </div>
+
+            <!-- Referred Doctor -->
+            <div class="intake-field doc-field">
+              <label style="display: flex; justify-content: space-between;">
+                <span>Referred Doctor</span>
+                <button type="button" id="btn-open-new-doctor-modal" class="btn-link-action">+ Add Doctor</button>
+              </label>
+              <select id="doctor-select" class="select-pos"></select>
+            </div>
+
+            <!-- Toggle Details Pill -->
+            <div class="intake-field toggle-field">
+              <label>&nbsp;</label>
+              <button type="button" id="btn-toggle-more-patient" class="btn-more-details" title="Add Address & Clinical Notes">
+                <span>+ Details</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Collapsible Address & Clinical Notes Row -->
+          <div id="patient-more-details" class="intake-expanded-row" style="display: none;">
+            <div class="intake-field" style="flex: 1.5;">
+              <label>Patient Address</label>
+              <input type="text" id="patient-address" class="form-control-pos" placeholder="Area / District / Ward">
+            </div>
+            <div class="intake-field" style="flex: 2;">
+              <label>Clinical Notes / History (e.g. Fasting 10h, Diabetic, Pregnant)</label>
+              <input type="text" id="patient-clinical-notes" class="form-control-pos" placeholder="Optional clinical remark for lab technologist">
+            </div>
           </div>
         </div>
 
-        <!-- Diagnostic Test Catalog Card -->
-        <div class="card" style="flex: 1; display: flex; flex-direction: column;">
-          <div class="card-header">
-            <span class="card-title">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
-              Investigation & Test Catalog
-            </span>
+        <!-- Diagnostic Test Catalog & Rush Rack -->
+        <div class="catalog-card">
+          
+          <!-- Fast Rush Shelf: Most Prescribed Tests (1-Tap) -->
+          <div class="rush-shelf-container">
+            <div class="rush-shelf-header">
+              <span class="rush-title">⚡ FAST RUSH SHELF — 1-Tap Instant Add (Morning Peak Tests)</span>
+              <span class="rush-sub">Tap once to add immediately to bill</span>
+            </div>
+            <div class="rush-shelf-grid">
+              <button type="button" class="rush-item-btn" data-code="CBC-01" style="border-left-color: #9333ea;">
+                <span class="rush-dot" style="background: #9333ea;"></span>
+                <div class="rush-info">
+                  <strong>CBC + ESR</strong>
+                  <span>৳400</span>
+                </div>
+              </button>
+              <button type="button" class="rush-item-btn" data-code="FBS-01" style="border-left-color: #64748b;">
+                <span class="rush-dot" style="background: #64748b;"></span>
+                <div class="rush-info">
+                  <strong>Fasting Glucose (FBS)</strong>
+                  <span>৳150</span>
+                </div>
+              </button>
+              <button type="button" class="rush-item-btn" data-code="LIPID-01" style="border-left-color: #eab308;">
+                <span class="rush-dot" style="background: #eab308;"></span>
+                <div class="rush-info">
+                  <strong>Lipid Profile</strong>
+                  <span>৳1,000</span>
+                </div>
+              </button>
+              <button type="button" class="rush-item-btn" data-code="CREAT-01" style="border-left-color: #eab308;">
+                <span class="rush-dot" style="background: #eab308;"></span>
+                <div class="rush-info">
+                  <strong>S. Creatinine</strong>
+                  <span>৳350</span>
+                </div>
+              </button>
+              <button type="button" class="rush-item-btn" data-code="SGPT-01" style="border-left-color: #eab308;">
+                <span class="rush-dot" style="background: #eab308;"></span>
+                <div class="rush-info">
+                  <strong>Serum SGPT/ALT</strong>
+                  <span>৳350</span>
+                </div>
+              </button>
+              <button type="button" class="rush-item-btn" data-code="URINE-01" style="border-left-color: #f97316;">
+                <span class="rush-dot" style="background: #f97316;"></span>
+                <div class="rush-info">
+                  <strong>Urine R/M/E</strong>
+                  <span>৳250</span>
+                </div>
+              </button>
+              <button type="button" class="rush-item-btn" data-code="DENG-01" style="border-left-color: #ef4444;">
+                <span class="rush-dot" style="background: #ef4444;"></span>
+                <div class="rush-info">
+                  <strong>Dengue NS1</strong>
+                  <span>৳450</span>
+                </div>
+              </button>
+              <button type="button" class="rush-item-btn" data-code="ECG-01" style="border-left-color: #ec4899;">
+                <span class="rush-dot" style="background: #ec4899;"></span>
+                <div class="rush-info">
+                  <strong>ECG 12-Lead</strong>
+                  <span>৳400</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Catalog Toolbar: Search + Add New Test -->
+          <div class="catalog-toolbar-row">
+            <div class="search-input-wrapper">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="test-search-input" class="search-input-pos" placeholder="Search tests by name, code or room (e.g. CBC, Lipid, X-Ray, Dengue, 101)...">
+              <button type="button" id="btn-clear-search" class="btn-clear-search" style="display: none;">✕</button>
+            </div>
             <button class="btn btn-secondary btn-sm" id="btn-open-new-test-modal">+ Add Test</button>
           </div>
-          <div class="card-body" style="flex: 1; display: flex; flex-direction: column;">
-            
-            <!-- Search & Filters -->
-            <div class="catalog-toolbar">
-              <div class="search-input-wrapper">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="test-search-input" class="form-control" placeholder="Search tests by name or code (e.g. CBC, RBS, Lipid, X-Ray, Echo)...">
-              </div>
-            </div>
 
-            <!-- Department Chips -->
-            <div id="dept-filters" class="dept-pills"></div>
+          <!-- Department Chips -->
+          <div id="dept-filters" class="dept-pills"></div>
 
-            <!-- Tests Grid -->
-            <div id="tests-grid" class="tests-grid"></div>
+          <!-- Tests Grid -->
+          <div id="tests-grid" class="tests-grid"></div>
 
-          </div>
         </div>
 
       </div>
 
-      <!-- Right Desk: POS Cart & Checkout -->
+      <!-- Right Desk: Clinical Cashier & Financial Terminal -->
       <div class="right-desk">
-        <div class="cart-card">
+        <div class="terminal-card">
           
-          <div class="cart-header">
-            <div style="font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
-              <span>🛒 Patient Bill</span>
-              <span class="badge" style="background: #0284c7; color: white;" id="cart-count">0</span>
+          <div class="terminal-header">
+            <div class="terminal-title">
+              <span class="terminal-icon">🧾</span>
+              <span>Patient Bill</span>
+              <span class="bill-count-badge" id="cart-count">0</span>
             </div>
-            <button class="btn btn-secondary btn-sm" id="btn-clear-cart" style="color: #ef4444;">Clear</button>
+            <button class="btn-clear-cart" id="btn-clear-cart" title="Clear all items from bill">✕ Clear</button>
           </div>
 
           <!-- Items in Cart -->
           <div id="cart-items-list" class="cart-items-list"></div>
 
-          <!-- Calculations & Payment Controls -->
+          <!-- Financial Calculation & Payment Desk -->
           <div class="billing-summary">
             
-            <!-- Subtotal -->
-            <div class="calc-row">
+            <!-- Subtotal & Urgent Row -->
+            <div class="summary-line-sub">
               <span>Subtotal:</span>
               <strong id="summary-subtotal">৳0</strong>
             </div>
 
-            <!-- Urgent Surcharge Toggle & Row -->
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; background: #fff7ed; padding: 4px 8px; border-radius: 4px;">
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #c2410c; font-weight: 600;">
+            <!-- iOS Style Urgent Toggle -->
+            <div class="urgent-toggle-strip">
+              <label class="urgent-label">
                 <input type="checkbox" id="urgent-toggle">
-                ⚡ Urgent / Emergency (+15%)
+                <span class="urgent-slider"></span>
+                <span class="urgent-text">⚡ Urgent / Emergency Delivery (+15%)</span>
               </label>
-              <span id="urgent-surcharge-row" style="display: none; font-weight: 700; color: #ea580c;" id="summary-urgent">+৳0</span>
+              <span id="urgent-surcharge-row" class="urgent-badge-amount" style="display: none;">+৳0</span>
             </div>
 
-            <!-- Discount Section -->
-            <div class="form-group">
-              <label style="display: flex; justify-content: space-between;">
+            <!-- 1-Tap Quick Discount Chips -->
+            <div class="discount-section">
+              <div class="discount-header-row">
                 <span>Discount / Concession:</span>
-                <span id="summary-discount-row" style="display: none; color: #059669; font-weight: 700;" id="summary-discount">-৳0</span>
-              </label>
-              <div class="discount-controls">
-                <select id="discount-type-select" class="form-control" style="font-size: 0.75rem;">
+                <span id="summary-discount-row" class="discount-badge-amount" style="display: none;">-৳0</span>
+              </div>
+              <div class="quick-discount-chips">
+                <button type="button" class="btn-disc-chip active" data-type="NONE" data-val="0">None</button>
+                <button type="button" class="btn-disc-chip" data-type="PERCENT" data-val="5">5%</button>
+                <button type="button" class="btn-disc-chip" data-type="PERCENT" data-val="10">10%</button>
+                <button type="button" class="btn-disc-chip" data-type="PERCENT" data-val="15">15%</button>
+                <button type="button" class="btn-disc-chip" data-type="FLAT" data-val="50">৳50</button>
+                <button type="button" class="btn-disc-chip" data-type="FLAT" data-val="100">৳100</button>
+                <button type="button" class="btn-disc-chip" data-type="DOCTOR" data-val="DOC">Doctor Ref</button>
+              </div>
+              <!-- Form controls for manual/dynamic adjustment -->
+              <div class="discount-manual-row" style="display: flex; gap: 4px; margin-top: 4px;">
+                <select id="discount-type-select" class="form-control-pos" style="width: 80px; font-size: 0.72rem; padding: 2px 4px;">
                   <option value="NONE">None</option>
                   <option value="PERCENT">%</option>
-                  <option value="FLAT">Flat</option>
+                  <option value="FLAT">Flat ৳</option>
                 </select>
-                <input type="number" id="discount-val-input" class="form-control" placeholder="Value" min="0">
-                <input type="text" id="discount-remark-input" class="form-control" placeholder="Authority/Reason" style="display: none;">
+                <input type="number" id="discount-val-input" class="form-control-pos" placeholder="0" min="0" style="width: 70px; font-size: 0.75rem; padding: 2px 4px;">
+                <input type="text" id="discount-remark-input" class="form-control-pos" placeholder="Authority / Reason" style="display: none; flex: 1; font-size: 0.72rem; padding: 2px 4px;">
               </div>
             </div>
 
-            <!-- Net Payable (Highlighted) -->
-            <div class="calc-row total-row">
-              <span>Net Payable:</span>
-              <span style="color: #0284c7;" id="summary-net">৳0</span>
+            <!-- Luminous Grand Net Payable Display -->
+            <div class="digital-terminal-net">
+              <div class="net-label">NET PAYABLE:</div>
+              <div class="net-digits" id="summary-net">৳0</div>
             </div>
 
-            <!-- Payment Method Chips -->
-            <div class="form-group" style="margin-top: 4px;">
-              <label>Payment Method:</label>
-              <div class="payment-method-selector">
-                <button type="button" class="btn-pay-method active" data-method="CASH">💵 Cash</button>
-                <button type="button" class="btn-pay-method" data-method="BKASH">📱 bKash</button>
-                <button type="button" class="btn-pay-method" data-method="NAGAD">📱 Nagad</button>
-                <button type="button" class="btn-pay-method" data-method="CARD">💳 Card</button>
+            <!-- Branded Payment Method Tiles -->
+            <div class="pay-methods-grid">
+              <button type="button" class="btn-pay-brand active pay-cash" data-method="CASH">
+                <span class="pay-icon">💵</span>
+                <span>CASH</span>
+              </button>
+              <button type="button" class="btn-pay-brand pay-bkash" data-method="BKASH">
+                <span class="pay-icon">📱</span>
+                <span>bKash</span>
+              </button>
+              <button type="button" class="btn-pay-brand pay-nagad" data-method="NAGAD">
+                <span class="pay-icon">📱</span>
+                <span>Nagad</span>
+              </button>
+              <button type="button" class="btn-pay-brand pay-card" data-method="CARD">
+                <span class="pay-icon">💳</span>
+                <span>Card/POS</span>
+              </button>
+            </div>
+
+            <!-- Paid Amount & Reference Inputs -->
+            <div class="paid-inputs-row">
+              <div class="paid-input-group">
+                <label>Paid Amount (৳):</label>
+                <input type="number" id="paid-amount-input" class="form-control-pos paid-input" placeholder="0">
+              </div>
+              <div class="paid-input-group">
+                <label>Trx ID / Slip Ref:</label>
+                <input type="text" id="payment-ref-input" class="form-control-pos" placeholder="Optional">
               </div>
             </div>
 
-            <!-- Amount Paid Input & Reference -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-              <div class="form-group">
-                <label>Paid Amount:</label>
-                <input type="number" id="paid-amount-input" class="form-control" placeholder="0">
-              </div>
-              <div class="form-group">
-                <label>Reference / Trx ID:</label>
-                <input type="text" id="payment-ref-input" class="form-control" placeholder="Optional">
-              </div>
-            </div>
-
-            <!-- Quick Cash Buttons -->
-            <div class="quick-cash-row">
+            <!-- Smart Dynamic Quick Cash Buttons -->
+            <div id="quick-cash-container" class="quick-cash-row">
               <button type="button" class="btn-quick-cash" data-val="exact">Exact Net</button>
               <button type="button" class="btn-quick-cash" data-val="500">৳500</button>
               <button type="button" class="btn-quick-cash" data-val="1000">৳1,000</button>
@@ -259,13 +365,22 @@
             <!-- Due / Change Alert Display -->
             <div id="due-display-row" style="display: none;"></div>
 
-            <!-- Complete Sale Button -->
-            <button id="btn-complete-pos" class="btn-complete-pos" style="margin-top: 6px;">
-              <span>Complete & Print Receipt</span>
-              <span style="font-size: 0.75rem; opacity: 0.8;">[Ctrl+Enter]</span>
-            </button>
+            <!-- Action Checkout Buttons -->
+            <div class="checkout-actions-row">
+              <button id="btn-complete-pos" class="btn-checkout-primary">
+                <span class="checkout-icon">🖨️</span>
+                <span class="checkout-label">Complete & Print 80mm Slip</span>
+                <span class="checkout-shortcut">[Ctrl+Enter]</span>
+              </button>
+              <button id="btn-complete-a4" class="btn-checkout-secondary" type="button" title="Complete and print A4 official diagnostic money receipt">
+                <span>📄 A4 Receipt</span>
+              </button>
+            </div>
 
           </div>
+
+        </div>
+      </div>
 
         </div>
       </div>
