@@ -9,7 +9,8 @@ export function hashPassword(pwd) {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DB_PATH = path.join(__dirname, '..', 'diagnostic_pos.db');
+const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DB_PATH = isVercel ? '/tmp/diagnostic_pos.db' : path.join(__dirname, '..', 'diagnostic_pos.db');
 
 export function initDatabase(dbPath = DB_PATH) {
   const db = new DatabaseSync(dbPath);

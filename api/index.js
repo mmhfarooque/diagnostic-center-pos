@@ -9,12 +9,16 @@ registerApiRoutes(router);
 export default async function handler(req, res) {
   // If MongoDB URI is set in Vercel environment variables, connect
   if (process.env.MONGODB_URI) {
-    await connectMongo();
+    try {
+      await connectMongo();
+    } catch (_) {}
   }
 
   const handled = await router.handle(req, res);
   if (!handled) {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Endpoint not found' }));
+    if (!res.headersSent) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Endpoint not found' }));
+    }
   }
 }
