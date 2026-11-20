@@ -15,6 +15,9 @@
     "medical-billing",
     "lab-management"
   ],
+  "engines": {
+    "node": "22.x"
+  },
   "author": "Mahmud Farooque <me@mfaruk.com>",
   "license": "MIT"
 }
