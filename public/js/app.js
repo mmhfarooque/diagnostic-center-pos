@@ -1367,6 +1367,104 @@ function setupEventListeners() {
     state.discountRemark = e.target.value;
   });
 
+  // Touch Gender Selection
+  $$('.btn-gender-touch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('.btn-gender-touch').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const g = btn.getAttribute('data-gender');
+      state.patient.gender = g === 'CHILD' ? 'OTHER' : g;
+      $('#patient-gender').value = state.patient.gender;
+    });
+  });
+
+  // Touch On-Screen Numpad Handlers
+  $$('.btn-touch-keypad').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      const targetInput = $(`#${targetId}`);
+      if (!targetInput) return;
+      state.numpadTargetInput = targetInput;
+      $('#numpad-title').textContent = `Enter ${targetId.replace('patient-', '').replace('-input', '').toUpperCase()}`;
+      $('#numpad-display').value = targetInput.value || '';
+      $('#numpad-modal').style.display = 'flex';
+    });
+  });
+
+  $$('.btn-num-key').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.getAttribute('data-val');
+      const display = $('#numpad-display');
+      display.value += val;
+      if (state.numpadTargetInput) {
+        state.numpadTargetInput.value = display.value;
+        state.numpadTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  });
+
+  $('#btn-numpad-back')?.addEventListener('click', () => {
+    const display = $('#numpad-display');
+    display.value = display.value.slice(0, -1);
+    if (state.numpadTargetInput) {
+      state.numpadTargetInput.value = display.value;
+      state.numpadTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+
+  $('#btn-numpad-clear')?.addEventListener('click', () => {
+    $('#numpad-display').value = '';
+    if (state.numpadTargetInput) {
+      state.numpadTargetInput.value = '';
+      state.numpadTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+
+  $('#btn-numpad-done')?.addEventListener('click', () => {
+    $('#numpad-modal').style.display = 'none';
+  });
+
+  // Operator PIN Pad Handlers
+  $('#operator-header-pill')?.addEventListener('click', () => {
+    $('#operator-pin-input').value = '';
+    $('#operator-modal').style.display = 'flex';
+  });
+
+  $$('.btn-quick-operator').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pin = btn.getAttribute('data-pin');
+      $('#operator-pin-input').value = pin;
+      verifyAndLoginOperator(pin);
+    });
+  });
+
+  $$('.btn-pin-digit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.getAttribute('data-val');
+      const pinInput = $('#operator-pin-input');
+      if (pinInput.value.length < 6) {
+        pinInput.value += val;
+        if (pinInput.value.length === 4) {
+          verifyAndLoginOperator(pinInput.value);
+        }
+      }
+    });
+  });
+
+  $('#btn-pin-clear')?.addEventListener('click', () => {
+    $('#operator-pin-input').value = '';
+  });
+
+  $('#btn-pin-back')?.addEventListener('click', () => {
+    const pinInput = $('#operator-pin-input');
+    pinInput.value = pinInput.value.slice(0, -1);
+  });
+
+  $('#btn-submit-pin-login')?.addEventListener('click', () => {
+    const pin = $('#operator-pin-input').value.trim();
+    if (pin) verifyAndLoginOperator(pin);
+  });
+
   $('#urgent-toggle')?.addEventListener('change', (e) => {
     state.urgent = e.target.checked;
     renderCart();
@@ -1576,6 +1674,37 @@ function switchTab(tab) {
   if (tab === 'reports') loadReports();
 }
 
+// Verify & Switch Operator via PIN
+async function verifyAndLoginOperator(pin) {
+  try {
+    const res = await api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ pin })
+    });
+    state.currentUser = res.user;
+    showToast(`Switched counter operator to ${res.user.name}`, 'success');
+    $('#operator-modal').style.display = 'none';
+    
+    // Update header badge
+    const nameEl = $('#operator-name-display');
+    const roleEl = $('#operator-role-display');
+    const initEl = $('#operator-avatar-initial');
+    if (nameEl) nameEl.textContent = res.user.name;
+    if (roleEl) roleEl.textContent = `${res.user.role.toUpperCase()} • PIN: ${pin}`;
+    if (initEl) initEl.textContent = res.user.name.charAt(0).toUpperCase();
+
+    // Auto-switch tabs by role
+    if (res.user.role === 'lab_tech') {
+      switchTab('lab');
+    } else if (res.user.role === 'operator') {
+      switchTab('pos');
+    }
+  } catch (err) {
+    const pinInput = $('#operator-pin-input');
+    if (pinInput) pinInput.value = '';
+  }
+}
+
 // Global exposure for inline events
 window.posApp = {
   viewInvoice: openPrintModal,
@@ -1584,6 +1713,10 @@ window.posApp = {
   addPackage: addPackageToCart,
   openResultsModal: openResultsModal,
   openReportModal: openReportModal,
+  openOperatorModal: () => {
+    $('#operator-pin-input').value = '';
+    $('#operator-modal').style.display = 'flex';
+  },
   loadReports: loadReports
 };
 

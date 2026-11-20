@@ -1,4 +1,4 @@
-import { db } from '../db.js';
+import { db, hashPassword } from '../db.js';
 
 export function registerApiRoutes(router) {
   // Helper to send JSON response
@@ -6,6 +6,57 @@ export function registerApiRoutes(router) {
     res.writeHead(statusCode, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(data));
   };
+
+  // 0. Authentication (Operator PIN & Credentials)
+  router.post('/api/auth/login', (req, res) => {
+    const { pin, email, password } = req.body;
+
+    let user = null;
+    if (pin) {
+      user = db.prepare('SELECT id, name, email, role, is_active FROM users WHERE pin_code = ? AND is_active = 1').get(String(pin).trim());
+    } else if (email && password) {
+      const hashed = hashPassword(password);
+      user = db.prepare('SELECT id, name, email, role, is_active FROM users WHERE email = ? AND password_hash = ? AND is_active = 1').get(email.toLowerCase().trim(), hashed);
+    }
+
+    if (!user) {
+      return json(res, { error: 'Invalid PIN or credentials' }, 401);
+    }
+
+    // In a stateless web app, we provide user object & mock bearer token
+    const token = `careplus_${user.id}_${Date.now()}`;
+    json(res, {
+      success: true,
+      user,
+      token
+    });
+  });
+
+  router.get('/api/users', (req, res) => {
+    const users = db.prepare('SELECT id, name, email, role, pin_code, is_active, created_at FROM users ORDER BY id ASC').all();
+    json(res, users);
+  });
+
+  router.post('/api/users', (req, res) => {
+    const { name, email, role = 'operator', pin_code, password = 'user123' } = req.body;
+    if (!name || !email || !pin_code) {
+      return json(res, { error: 'Name, email, and 4-digit PIN code are required' }, 400);
+    }
+    try {
+      const stmt = db.prepare(`
+        INSERT INTO users (name, email, role, pin_code, password_hash)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      const result = stmt.run(name.trim(), email.toLowerCase().trim(), role, String(pin_code).trim(), hashPassword(password));
+      const newUser = db.prepare('SELECT id, name, email, role, pin_code, is_active FROM users WHERE id = ?').get(result.lastInsertRowid);
+      json(res, newUser, 201);
+    } catch (err) {
+      if (err.message.includes('UNIQUE constraint')) {
+        return json(res, { error: 'User email already exists' }, 409);
+      }
+      throw err;
+    }
+  });
 
   // 1. Dashboard / Today's stats
   router.get('/api/stats', (req, res) => {

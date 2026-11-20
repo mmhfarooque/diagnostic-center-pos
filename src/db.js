@@ -1,6 +1,11 @@
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+
+export function hashPassword(pwd) {
+  return crypto.createHash('sha256').update(pwd + 'salt_careplus_pos_2026').digest('hex');
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +29,17 @@ export function initDatabase(dbPath = DB_PATH) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
       description TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      role TEXT NOT NULL DEFAULT 'operator', -- 'admin', 'operator', 'lab_tech'
+      pin_code TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -197,6 +213,23 @@ export function initDatabase(dbPath = DB_PATH) {
     const insertDept = db.prepare('INSERT INTO departments (name, description) VALUES (?, ?)');
     for (const [name, desc] of departments) {
       insertDept.run(name, desc);
+    }
+  }
+
+  // Seed Users & Operators
+  const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
+  if (userCount.count === 0) {
+    const users = [
+      ['Dr. Mahmud Farooque (Admin)', 'admin@careplus.com', 'admin', '9999', hashPassword('Admin@1234')],
+      ['Rehana Begum (Cashier Counter 1)', 'cashier@careplus.com', 'operator', '1234', hashPassword('Cashier@1234')],
+      ['Kamrul Hassan (Lab Technologist)', 'lab@careplus.com', 'lab_tech', '5678', hashPassword('Lab@1234')]
+    ];
+    const insertUser = db.prepare(`
+      INSERT INTO users (name, email, role, pin_code, password_hash)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    for (const u of users) {
+      insertUser.run(...u);
     }
   }
 

@@ -184,4 +184,21 @@ test('Diagnostic POS API test suite', async (t) => {
     assert.equal(res.statusCode, 200);
     assert.ok(res.body.includes('Invoice No,Date,Patient ID'));
   });
+
+  await t.test('POST /api/auth/login logs in operator via PIN and credentials', async () => {
+    // Login with operator PIN 1234
+    const pinRes = await mockCall(router, 'POST', '/api/auth/login', { pin: '1234' });
+    assert.equal(pinRes.statusCode, 200);
+    assert.equal(pinRes.body.user.role, 'operator');
+    assert.ok(pinRes.body.token);
+
+    // Login with admin email & password
+    const credRes = await mockCall(router, 'POST', '/api/auth/login', { email: 'admin@careplus.com', password: 'Admin@1234' });
+    assert.equal(credRes.statusCode, 200);
+    assert.equal(credRes.body.user.role, 'admin');
+
+    // Reject wrong PIN
+    const failRes = await mockCall(router, 'POST', '/api/auth/login', { pin: '0000' });
+    assert.equal(failRes.statusCode, 401);
+  });
 });
