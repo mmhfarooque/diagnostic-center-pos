@@ -1,0 +1,20 @@
+{
+  "name": "diagnostic-pos",
+  "version": "1.0.0",
+  "description": "Diagnostic Center Patient Test Billing & POS System",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "diagnostic-center",
+    "pos",
+    "medical-billing",
+    "lab-management"
+  ],
+  "author": "Mahmud Farooque <me@mfaruk.com>",
+  "license": "MIT"
+}
