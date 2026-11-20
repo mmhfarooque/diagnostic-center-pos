@@ -1,25 +1,25 @@
-import mongoose from 'mongoose';
-
-let isConnected = false;
+let mongooseInstance = null;
 
 export async function connectMongo(uri = process.env.MONGODB_URI) {
   if (!uri) {
     return false;
   }
-  if (isConnected) {
-    return true;
-  }
-
   try {
-    await mongoose.connect(uri, {
+    if (!mongooseInstance) {
+      const mod = await import('mongoose');
+      mongooseInstance = mod.default || mod;
+    }
+    if (mongooseInstance.connection?.readyState === 1) {
+      return true;
+    }
+    await mongooseInstance.connect(uri, {
       serverSelectionTimeoutMS: 5000,
       bufferCommands: false
     });
-    isConnected = true;
-    console.log(' connected to MongoDB Atlas cluster');
+    console.log('✓ Connected to MongoDB Atlas cluster');
     return true;
   } catch (err) {
-    console.warn('⚠️ MongoDB connection failed, falling back to SQLite:', err.message);
+    console.warn('⚠️ MongoDB connection note:', err.message);
     return false;
   }
 }

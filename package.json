@@ -18,6 +18,9 @@
   "engines": {
     "node": "22.x"
   },
+  "dependencies": {
+    "mongoose": "^8.8.4"
+  },
   "author": "Mahmud Farooque <me@mfaruk.com>",
   "license": "MIT"
 }
