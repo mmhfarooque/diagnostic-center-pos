@@ -258,38 +258,35 @@
     <main class="flex-1 min-w-0 flex flex-col h-full bg-[#F4F6F9] overflow-hidden">
 
       <!-- TOP TOUCH HEADER: Search Pill + Active Patient Pill Card + Mode Switch -->
-      <header class="shrink-0 bg-white border-b border-slate-200/90 px-4 py-2.5 flex flex-col gap-2 shadow-xs z-10">
-        <div class="flex items-stretch gap-3">
+      <header class="shrink-0 bg-white border-b border-slate-200/90 px-4 py-2 flex flex-col gap-2 shadow-xs z-10">
+        <div class="flex items-stretch gap-2.5">
           
-          <!-- Brand Subtitle + Touch Search Pill -->
-          <div class="flex-1 min-w-0 flex items-center gap-2.5">
-            <div class="hidden xl:flex flex-col shrink-0 pr-2 border-r border-slate-200">
-              <span class="text-sm font-extrabold text-slate-900 tracking-tight leading-tight" data-i18n="brandShort">CarePlus Diagnostics</span>
-              <span class="text-[11px] font-semibold text-teal-700 leading-tight" data-i18n="branchShort">Dhanmondi · Counter #01</span>
-            </div>
-
-            <!-- Big Touch Search Pill (52px height) -->
-            <div class="relative flex-1 min-w-0">
-              <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-              </svg>
-              <input id="touch-search-input" type="text" oninput="handleSearchChange()"
-                placeholder="Search across all 70+ tests (CBC, Dengue, USG, Sugar, Creatinine, X-Ray)..."
-                class="w-full h-[52px] pl-12 pr-12 rounded-2xl bg-slate-100 border-2 border-transparent focus:bg-white focus:border-teal-600 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none transition" />
-              <button type="button" id="search-clear-btn" onclick="clearSearch()"
-                class="hidden tap-card absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center cursor-pointer"
-                aria-label="Clear search">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
+          <!-- 1. Lab Location & Branch Switcher Pill (Always Visible on ALL Screen Sizes!) -->
+          <div id="branch-pill-wrapper" class="shrink-0 flex items-stretch">
+            <!-- Populated dynamically by renderBranchPill() -->
           </div>
 
-          <!-- Active Patient Pill Card (Huge Tap Target beside Search) -->
+          <!-- 2. Big Touch Search Pill (52px height) -->
+          <div class="relative flex-1 min-w-[200px]">
+            <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input id="touch-search-input" type="text" oninput="handleSearchChange()"
+              placeholder="Search across all 70+ tests (CBC, Dengue, USG, Sugar, Creatinine, X-Ray)..."
+              class="w-full h-[52px] pl-12 pr-12 rounded-2xl bg-slate-100 border-2 border-transparent focus:bg-white focus:border-teal-600 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none transition" />
+            <button type="button" id="search-clear-btn" onclick="clearSearch()"
+              class="hidden tap-card absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center cursor-pointer"
+              aria-label="Clear search">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- 3. Active Patient Pill Card (Huge Tap Target beside Search) -->
           <div id="patient-pill-wrapper" class="shrink-0 flex items-stretch gap-2">
             <!-- Populated dynamically by renderPatientPill() -->
           </div>
 
-          <!-- Operator Session & Admin Discount Setup Pills -->
+          <!-- 4. Operator Session & Explicit Log In / Log Out Buttons -->
           <div id="operator-pill-wrapper" class="shrink-0 flex items-stretch gap-2">
             <!-- Populated dynamically by renderOperatorPill() -->
           </div>
@@ -350,7 +347,7 @@
 
         <!-- Tier 3: Compact Action Test Cards (Pack to top, generous height, legible title, no blanks!) -->
         <div class="flex-1 min-h-0 flex flex-col">
-          <div id="tier3-test-grid" class="flex-1 min-h-0 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 overflow-y-auto thin-scroll content-start auto-rows-max pb-3">
+          <div id="tier3-test-grid" class="flex-1 min-h-0 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto thin-scroll content-start items-start auto-rows-[142px] pb-4">
             <!-- Populated dynamically by renderTier3Tests() -->
           </div>
         </div>
@@ -919,14 +916,19 @@
        MODAL 9: TOUCH PIN LOGIN & OPERATOR / ADMIN AUTHENTICATION
        ======================================================================= -->
   <div id="login-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-5">
+    <div class="relative bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-5">
       
+      <!-- Close / Dismiss Modal Button -->
+      <button type="button" onclick="closeLoginModal()"
+        class="absolute right-4 top-4 w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-sm font-bold cursor-pointer transition"
+        title="Close login modal">✕</button>
+
       <!-- Brand & Title -->
-      <div class="text-center space-y-1">
+      <div class="text-center space-y-1 pt-1">
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-black">
           <span>✚ CAREPLUS DIAGNOSTICS</span>
           <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
-          <span>DHANMONDI</span>
+          <span id="login-modal-branch-label">DHANMONDI MAIN LAB</span>
         </div>
         <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Counter Operator Sign-In</h2>
         <p class="text-xs font-semibold text-slate-500">Select an operator profile or enter your 4-digit PIN</p>
@@ -989,11 +991,17 @@
       </div>
 
       <!-- Action Button -->
-      <button type="button" onclick="submitLoginPin()"
-        class="tap-card w-full h-[54px] rounded-2xl bg-gradient-to-r from-teal-700 to-emerald-700 hover:from-teal-800 hover:to-emerald-800 text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Unlock & Sign In to Counter</span>
-      </button>
+      <div class="space-y-2">
+        <button type="button" onclick="submitLoginPin()"
+          class="tap-card w-full h-[54px] rounded-2xl bg-gradient-to-r from-teal-700 to-emerald-700 hover:from-teal-800 hover:to-emerald-800 text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Unlock & Sign In to Counter</span>
+        </button>
+        <button type="button" onclick="closeLoginModal()"
+          class="w-full text-center text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer py-1">
+          Dismiss & Explore Terminal in Preview Mode
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1271,6 +1279,71 @@
           <span>Apply Concession to Bill</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL 12: DIAGNOSTIC LAB LOCATION & BILLING COUNTER SWITCHER
+       ======================================================================= -->
+  <div id="branch-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl max-h-[92dvh] rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+      
+      <!-- Header -->
+      <div class="shrink-0 bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-teal-500/20 text-teal-400 border border-teal-500/30 flex items-center justify-center text-lg">📍</div>
+          <div>
+            <h3 class="text-base font-extrabold">Diagnostic Lab Location & Counter</h3>
+            <p class="text-xs text-slate-400">CarePlus Diagnostic Network — Select Active Dhaka Branch & Billing Desk</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeBranchModal()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-sm cursor-pointer">✕</button>
+      </div>
+
+      <!-- Body -->
+      <div class="flex-1 overflow-y-auto touch-scroll p-6 space-y-5">
+        
+        <!-- Section 1: Lab Branches -->
+        <div>
+          <div class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-2.5 flex items-center gap-2">
+            <span>1. Select Diagnostic Branch:</span>
+            <span class="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">4 Active Locations</span>
+          </div>
+          <div id="branch-selection-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Populated dynamically by renderBranchModal() -->
+          </div>
+        </div>
+
+        <!-- Section 2: Billing Counter -->
+        <div>
+          <div class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-2.5 flex items-center gap-2">
+            <span>2. Select Active Billing Counter:</span>
+          </div>
+          <div id="counter-selection-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <!-- Populated dynamically by renderBranchModal() -->
+          </div>
+        </div>
+
+        <!-- Info Notice -->
+        <div class="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200/90 text-xs text-slate-700 flex items-start gap-2.5">
+          <span class="text-base shrink-0">ℹ️</span>
+          <div class="leading-relaxed">
+            Changing branch updates the <strong>Money Receipt header</strong>, <strong>Phlebotomy sample routing</strong>, and <strong>online delivery turnaround</strong> for all subsequent bills.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer CTA -->
+      <div class="shrink-0 bg-slate-50 border-t border-slate-200 px-6 py-3.5 flex items-center justify-between">
+        <button type="button" onclick="closeBranchModal()" class="tap-card h-[46px] px-5 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 font-bold text-xs text-slate-700 cursor-pointer">
+          Cancel
+        </button>
+        <button type="button" onclick="saveBranchSelection()" class="tap-card h-[46px] px-6 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs shadow-md flex items-center gap-2 cursor-pointer">
+          <span>Apply Location & Counter</span>
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -1640,6 +1713,10 @@
         ]
       },
       catalogViewMode: 'drilldown', // 'drilldown' or 'directory'
+      activeBranchId: 'dhanmondi',
+      activeCounterId: 'c1',
+      branchModalDraftBranch: 'dhanmondi',
+      branchModalDraftCounter: 'c1',
       activeDept: 'Hematology',
       activeSubGroup: 'All',
       searchQuery: '',
@@ -1662,6 +1739,55 @@
         doctorId: 1
       }
     };
+
+    const CAREPLUS_BRANCHES = [
+      {
+        id: 'dhanmondi',
+        name: 'CarePlus Dhanmondi (Main Hub)',
+        short: 'CarePlus Dhanmondi',
+        sub: 'Main Lab & Imaging Hub',
+        address: 'House 42, Road 7/A, Dhanmondi R/A, Dhaka-1209',
+        phone: '+880 1711-000001',
+        tag: '24/7 STAT Lab Open',
+        badge: 'Main Diagnostic Hub'
+      },
+      {
+        id: 'uttara',
+        name: 'CarePlus Uttara Branch',
+        short: 'CarePlus Uttara',
+        sub: 'Sample Collection & OPD Center',
+        address: 'Plot 18, Sector 3, Jashimuddin Avenue, Uttara, Dhaka-1230',
+        phone: '+880 1711-000002',
+        tag: '7:00 AM - 11:00 PM',
+        badge: 'OPD & Collection'
+      },
+      {
+        id: 'mirpur',
+        name: 'CarePlus Mirpur Branch',
+        short: 'CarePlus Mirpur',
+        sub: 'Digital X-Ray & USG Center',
+        address: 'Mirpur 10 Roundabout (Opposite Fire Station), Dhaka-1216',
+        phone: '+880 1711-000003',
+        tag: '7:30 AM - 10:30 PM',
+        badge: 'X-Ray & USG'
+      },
+      {
+        id: 'banani',
+        name: 'CarePlus Banani Branch',
+        short: 'CarePlus Banani',
+        sub: 'Executive Health Checkup & Lab',
+        address: 'House 55, Road 11, Block D, Banani, Dhaka-1213',
+        phone: '+880 1711-000004',
+        tag: '7:00 AM - 10:00 PM',
+        badge: 'Executive Checkup'
+      }
+    ];
+
+    const CAREPLUS_COUNTERS = [
+      { id: 'c1', label: 'Counter #01', name: 'Counter 1', sub: 'General Billing & OPD Reception' },
+      { id: 'c2', label: 'Counter #02', name: 'Counter 2', sub: 'Fast Track / STAT Emergency Billing' },
+      { id: 'c3', label: 'Counter #03', name: 'Counter 3', sub: 'Corporate, Insurance & VIP Desk' }
+    ];
 
     const SEEDED_OPERATORS = [
       { id: 1, name: 'Rehana Begum', role: 'operator', title: 'Cashier Counter 1', pin: '1234', avatar: 'R' },
@@ -2023,7 +2149,7 @@
               </div>
               <span class="text-[11px] font-semibold text-slate-400">${sec.dept}</span>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 content-start auto-rows-max">
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 content-start items-start auto-rows-[142px]">
               ${tests.map(t => renderSingleTestCardHtml(t)).join('')}
             </div>
           </div>
@@ -2044,19 +2170,19 @@
 
       return `
         <button type="button" onclick="toggleTestInCart('${test.id}')"
-          class="tap-card group relative text-left p-3.5 rounded-2xl border-2 transition-all duration-150 cursor-pointer flex flex-col justify-between min-h-[126px] ${
+          class="tap-card group relative text-left p-3 rounded-2xl border-2 transition-all duration-150 cursor-pointer flex flex-col justify-between h-[142px] min-h-[142px] max-h-[142px] overflow-hidden ${
             selected
               ? 'bg-teal-50/95 border-teal-600 shadow-md ring-2 ring-teal-500/25'
               : 'bg-white border-slate-200/90 hover:border-teal-500 hover:shadow-xs'
           }">
 
           <!-- Top Row: Specimen Pill + Code + Action Icon -->
-          <div class="w-full flex items-center justify-between gap-2 leading-none">
+          <div class="w-full flex items-center justify-between gap-1.5 leading-none shrink-0">
             <div class="flex items-center gap-1.5 min-w-0">
-              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-bold ${test.tubeColor}">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-bold ${test.tubeColor} shrink-0">
                 ${test.sample}
               </span>
-              <span class="font-mono text-[10.5px] font-bold text-slate-400 tracking-wider shrink-0">${test.code}</span>
+              <span class="font-mono text-[11px] font-bold text-slate-400 tracking-wider truncate">${test.code}</span>
             </div>
 
             ${selected ? `
@@ -2070,27 +2196,27 @@
             `}
           </div>
 
-          <!-- Middle: Prominent, Highly Legible Title (15.5px, Font-Semibold, NEVER Truncated!) -->
-          <div class="my-2 min-w-0">
-            <div class="text-[15.5px] font-semibold text-slate-900 leading-snug group-hover:text-teal-900 transition-colors">
+          <!-- Middle: Prominent, Highly Legible Title (Bigger font, less bold, no ellipsis guessing!) -->
+          <div class="my-auto min-w-0 py-0.5">
+            <div class="text-[17px] font-medium text-slate-900 leading-[21px] group-hover:text-teal-900 transition-colors line-clamp-2">
               ${primaryName}
             </div>
-            <div class="text-[11.5px] font-normal text-slate-500 leading-tight mt-1 line-clamp-1">
+            <div class="text-[11.5px] font-normal text-slate-500 leading-tight mt-0.5 line-clamp-1">
               ${secondaryName}
             </div>
           </div>
 
           <!-- Bottom Row: Room/TAT Tag + Bold BDT Price -->
-          <div class="w-full flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
-            <div class="text-[11px] font-medium text-slate-400 truncate">
+          <div class="w-full flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-100 shrink-0 leading-none">
+            <div class="text-[11px] font-medium text-slate-500 truncate">
               ${test.govtFixed
-                ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-black tracking-wide">🔒 GOVT RATE ৳300</span>`
+                ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[9.5px] font-black tracking-wide">🔒 GOVT ৳300</span>`
                 : test.isPackage
-                ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-teal-100 text-teal-900 text-[10px] font-black tracking-wide">🎁 PACKAGE</span>`
+                ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-teal-100 text-teal-900 text-[9.5px] font-black tracking-wide">🎁 PACKAGE</span>`
                 : (test.room ? test.room.split(' ')[0] : 'Lab')
               }
             </div>
-            <div class="text-[16px] font-bold font-mono tabular-nums leading-none ${selected ? 'text-teal-900' : 'text-slate-900'}">
+            <div class="text-[17px] font-bold font-mono tabular-nums leading-none ${selected ? 'text-teal-900' : 'text-slate-900'}">
               ৳${test.price.toLocaleString()}
             </div>
           </div>
@@ -2847,6 +2973,10 @@
       const labCopy = document.getElementById('receipt-lab-copy');
       const isDue = bill.dueAmount > 0;
       
+      const branch = CAREPLUS_BRANCHES.find(b => b.id === state.activeBranchId) || CAREPLUS_BRANCHES[0];
+      const counter = CAREPLUS_COUNTERS.find(c => c.id === state.activeCounterId) || CAREPLUS_COUNTERS[0];
+      const opName = state.currentUser ? state.currentUser.name : 'Counter Cashier';
+
       const barcodeSvg = generateBarcodeSvg(bill.invoiceId, { height: 32, barWidth: 1.6, fontSize: 10 });
       const qrSvg = generateQrCodeSvg(`https://careplus-diagnostics.com/verify/${bill.invoiceId}`, { size: 60 });
 
@@ -2876,8 +3006,9 @@
         <div>
           <div class="flex items-start justify-between border-b border-slate-200 pb-3 mb-3">
             <div>
-              <div class="text-sm font-black text-teal-800">CarePlus Diagnostic Center</div>
-              <div class="text-[10px] text-slate-500">House 42, Road 11, Dhanmondi, Dhaka · Hotline: +880 1711-000222</div>
+              <div class="text-sm font-black text-teal-800">${branch.name}</div>
+              <div class="text-[10px] text-slate-500">${branch.address} · Hotline: ${branch.phone}</div>
+              <div class="text-[9.5px] font-bold text-slate-600 mt-0.5">${counter.label} (${counter.sub.split('&')[0].trim()}) · Cashier: ${opName}</div>
             </div>
             <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[10px] font-black uppercase">Patient Copy</span>
           </div>
@@ -2949,7 +3080,7 @@
           <div class="flex items-start justify-between border-b border-slate-200 pb-3 mb-3">
             <div>
               <div class="text-sm font-black text-slate-900">LAB SAMPLE COLLECTION SLIP</div>
-              <div class="text-[10px] text-slate-500">CarePlus Dhanmondi · Counter #01</div>
+              <div class="text-[10px] text-slate-500">${branch.name} · ${counter.label}</div>
             </div>
             <span class="px-2.5 py-1 rounded-lg bg-teal-100 text-teal-900 border border-teal-300 text-[10px] font-black uppercase">Lab Copy</span>
           </div>
@@ -3417,11 +3548,10 @@
     }
 
     function closeLoginModal() {
-      if (!state.isAuthenticated) {
-        showToast('Please sign in with operator PIN to use terminal', 'warn');
-        return;
-      }
       document.getElementById('login-modal').classList.add('hidden');
+      if (!state.isAuthenticated) {
+        showToast('Viewing terminal in preview mode · Tap "Log In / Start Shift" to bill', 'dark');
+      }
     }
 
     function pressLoginKey(key) {
@@ -3517,8 +3647,12 @@
       if (!state.currentUser) {
         wrapper.innerHTML = `
           <button type="button" onclick="showLoginModal(false)"
-            class="tap-card h-[52px] px-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 text-amber-900 flex items-center gap-2 cursor-pointer font-bold text-xs">
-            <span>🔒 Sign In</span>
+            class="tap-card h-[52px] px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-sm flex items-center gap-2.5 cursor-pointer font-extrabold text-xs transition">
+            <span class="text-base">🔑</span>
+            <div class="text-left leading-tight">
+              <div class="text-xs font-black text-white">Log In / Shift Start</div>
+              <div class="text-[9.5px] font-bold text-amber-100">Tap to enter PIN</div>
+            </div>
           </button>
         `;
         return;
@@ -3527,23 +3661,37 @@
       const u = state.currentUser;
       const isAdmin = u.role === 'admin';
       const initial = u.name.split(' ')[0][0] || 'U';
+      const counter = CAREPLUS_COUNTERS.find(c => c.id === state.activeCounterId) || CAREPLUS_COUNTERS[0];
 
       wrapper.innerHTML = `
         <!-- Operator Identity Pill -->
-        <button type="button" onclick="showLoginModal(false)"
-          class="tap-card h-[52px] px-3 rounded-2xl bg-white hover:bg-slate-50 border-2 border-slate-200/90 shadow-2xs flex items-center gap-2 cursor-pointer"
-          title="Active Operator Session · Tap to switch or lock">
+        <div class="h-[52px] px-3 rounded-2xl bg-white border-2 border-slate-200/90 shadow-2xs flex items-center gap-2">
           <span class="w-8 h-8 rounded-xl ${isAdmin ? 'bg-amber-600 text-white' : 'bg-teal-700 text-white'} flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
             ${initial}
           </span>
-          <div class="text-left hidden lg:block leading-tight">
-            <div class="text-xs font-black text-slate-900 truncate max-w-[130px]">${u.name}</div>
+          <div class="text-left leading-tight">
+            <div class="text-xs font-black text-slate-900 truncate max-w-[120px]">${u.name}</div>
             <div class="text-[10px] font-bold ${isAdmin ? 'text-amber-700' : 'text-teal-700'} flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full ${isAdmin ? 'bg-amber-500' : 'bg-teal-500'}"></span>
-              ${isAdmin ? 'ADMIN' : 'CASHIER'} · Counter 1
+              ${isAdmin ? 'ADMIN' : 'CASHIER'} · ${counter.label}
             </div>
           </div>
-          <span class="text-slate-400 text-xs ml-0.5">⇄</span>
+        </div>
+
+        <!-- Switch Operator PIN Button -->
+        <button type="button" onclick="showLoginModal(false)"
+          class="tap-card h-[52px] px-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 flex items-center gap-1 cursor-pointer font-bold text-xs"
+          title="Switch operator PIN">
+          <span class="text-sm">⇄</span>
+          <span class="hidden md:inline text-[11px] font-bold">Switch</span>
+        </button>
+
+        <!-- Prominent Explicit Log Out Button -->
+        <button type="button" onclick="logoutOperator()"
+          class="tap-card h-[52px] px-3.5 rounded-2xl bg-rose-50 hover:bg-rose-100 border-2 border-rose-200 text-rose-700 flex items-center gap-1.5 cursor-pointer font-extrabold text-xs transition"
+          title="Log out and lock billing terminal">
+          <span class="text-base">🚪</span>
+          <span class="text-xs font-black">Log Out</span>
         </button>
 
         ${isAdmin ? `
@@ -3552,13 +3700,167 @@
             class="tap-card h-[52px] px-3.5 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border-2 border-amber-500/40 text-amber-950 flex items-center gap-2 cursor-pointer font-bold text-xs shadow-2xs"
             title="Configure Doctor Referral 15% & Flat Discounts up to 30%">
             <span class="text-base">🛡️</span>
-            <div class="text-left hidden xl:block leading-tight">
+            <div class="text-left hidden lg:block leading-tight">
               <div class="text-[11px] font-black text-amber-950">Discount Setup</div>
-              <div class="text-[9.5px] font-bold text-amber-700">Ref ${state.discountSettings.doctorRefDiscountPct}% · Flat ${state.discountSettings.normalFlatDiscountMax}%</div>
+              <div class="text-[9.5px] font-bold text-amber-700">Ref ${state.discountSettings.doctorRefDiscountPct}% · Max ${state.discountSettings.normalFlatDiscountMax}%</div>
             </div>
           </button>
         ` : ''}
       `;
+    }
+
+    function logoutOperator() {
+      playPosSound('remove');
+      sessionStorage.removeItem('careplus_auth');
+      state.currentUser = null;
+      state.isAuthenticated = false;
+      state.loginPinBuffer = '';
+      renderOperatorPill();
+      showToast('Cashier logged out. Terminal locked.', 'dark');
+      showLoginModal(false);
+    }
+
+    // =========================================================================
+    // 14B. DIAGNOSTIC LAB LOCATION & BILLING COUNTER ENGINE
+    // =========================================================================
+    function loadBranchSettings() {
+      try {
+        const savedB = localStorage.getItem('careplus_active_branch');
+        if (savedB && CAREPLUS_BRANCHES.some(b => b.id === savedB)) {
+          state.activeBranchId = savedB;
+        }
+        const savedC = localStorage.getItem('careplus_active_counter');
+        if (savedC && CAREPLUS_COUNTERS.some(c => c.id === savedC)) {
+          state.activeCounterId = savedC;
+        }
+      } catch (e) {
+        console.warn('Could not read branch settings from storage', e);
+      }
+    }
+
+    function renderBranchPill() {
+      const wrapper = document.getElementById('branch-pill-wrapper');
+      if (!wrapper) return;
+      const branch = CAREPLUS_BRANCHES.find(b => b.id === state.activeBranchId) || CAREPLUS_BRANCHES[0];
+      const counter = CAREPLUS_COUNTERS.find(c => c.id === state.activeCounterId) || CAREPLUS_COUNTERS[0];
+
+      wrapper.innerHTML = `
+        <button type="button" onclick="openBranchModal()"
+          class="tap-card h-[52px] px-3.5 rounded-2xl bg-teal-50/80 hover:bg-teal-100/90 border-2 border-teal-200/90 flex items-center gap-2.5 cursor-pointer transition text-left shadow-2xs"
+          title="Active Diagnostic Lab Branch & Billing Counter · Tap to switch">
+          <div class="w-9 h-9 rounded-xl bg-teal-700 text-white flex items-center justify-center text-base shrink-0 shadow-xs">
+            📍
+          </div>
+          <div class="flex flex-col justify-center leading-tight">
+            <div class="flex items-center gap-1">
+              <span class="text-xs font-black text-slate-900 tracking-tight">${branch.short}</span>
+              <span class="text-[10px] text-teal-700 font-bold">▾</span>
+            </div>
+            <div class="text-[10.5px] font-bold text-teal-800">${branch.sub.split('&')[0].trim()} · ${counter.label}</div>
+          </div>
+        </button>
+      `;
+
+      const loginBranchLabel = document.getElementById('login-modal-branch-label');
+      if (loginBranchLabel) {
+        loginBranchLabel.textContent = `${branch.short.toUpperCase()} · ${counter.label}`;
+      }
+    }
+
+    function openBranchModal() {
+      playPosSound('tap');
+      state.branchModalDraftBranch = state.activeBranchId;
+      state.branchModalDraftCounter = state.activeCounterId;
+      renderBranchModal();
+      document.getElementById('branch-modal').classList.remove('hidden');
+    }
+
+    function closeBranchModal() {
+      document.getElementById('branch-modal').classList.add('hidden');
+    }
+
+    function renderBranchModal() {
+      const branchContainer = document.getElementById('branch-selection-grid');
+      const counterContainer = document.getElementById('counter-selection-grid');
+      if (!branchContainer || !counterContainer) return;
+
+      branchContainer.innerHTML = CAREPLUS_BRANCHES.map(b => {
+        const isSelected = b.id === state.branchModalDraftBranch;
+        return `
+          <div onclick="selectDraftBranch('${b.id}')"
+            class="tap-card p-3.5 rounded-2xl border-2 transition cursor-pointer flex flex-col justify-between ${
+              isSelected
+                ? 'border-teal-600 bg-teal-50/80 shadow-sm ring-2 ring-teal-500/20'
+                : 'border-slate-200 bg-white hover:border-slate-300'
+            }">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="text-xs font-black ${isSelected ? 'text-teal-950' : 'text-slate-900'}">${b.name}</div>
+                <div class="text-[11px] font-semibold text-teal-700 mt-0.5">${b.sub}</div>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[9.5px] font-extrabold ${isSelected ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600'}">
+                ${isSelected ? 'ACTIVE' : b.badge}
+              </span>
+            </div>
+            <div class="text-[10.5px] text-slate-500 mt-2.5 pt-2 border-t border-slate-100 space-y-0.5">
+              <div>${b.address}</div>
+              <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                <span>Tel: ${b.phone}</span>
+                <span class="font-bold text-teal-800">${b.tag}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      counterContainer.innerHTML = CAREPLUS_COUNTERS.map(c => {
+        const isSelected = c.id === state.branchModalDraftCounter;
+        return `
+          <button type="button" onclick="selectDraftCounter('${c.id}')"
+            class="tap-card p-3 rounded-2xl border-2 text-left cursor-pointer transition ${
+              isSelected
+                ? 'border-teal-600 bg-teal-50/80 shadow-xs'
+                : 'border-slate-200 bg-white hover:border-slate-300'
+            }">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-black ${isSelected ? 'text-teal-950' : 'text-slate-900'}">${c.label}</span>
+              <span class="w-4 h-4 rounded-full border-2 ${isSelected ? 'border-teal-600 bg-teal-600' : 'border-slate-300'} flex items-center justify-center">
+                ${isSelected ? '<span class="w-1.5 h-1.5 rounded-full bg-white"></span>' : ''}
+              </span>
+            </div>
+            <div class="text-[10.5px] font-semibold text-slate-500 mt-1 leading-snug">${c.sub}</div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectDraftBranch(branchId) {
+      playPosSound('tap');
+      state.branchModalDraftBranch = branchId;
+      renderBranchModal();
+    }
+
+    function selectDraftCounter(counterId) {
+      playPosSound('tap');
+      state.branchModalDraftCounter = counterId;
+      renderBranchModal();
+    }
+
+    function saveBranchSelection() {
+      playPosSound('cash');
+      state.activeBranchId = state.branchModalDraftBranch;
+      state.activeCounterId = state.branchModalDraftCounter;
+      try {
+        localStorage.setItem('careplus_active_branch', state.activeBranchId);
+        localStorage.setItem('careplus_active_counter', state.activeCounterId);
+      } catch (e) {}
+
+      closeBranchModal();
+      renderBranchPill();
+      renderOperatorPill();
+      const branch = CAREPLUS_BRANCHES.find(b => b.id === state.activeBranchId) || CAREPLUS_BRANCHES[0];
+      const counter = CAREPLUS_COUNTERS.find(c => c.id === state.activeCounterId) || CAREPLUS_COUNTERS[0];
+      showToast(`Terminal Switched: ${branch.short} (${counter.label})`, 'success');
     }
 
     // =========================================================================
@@ -3841,9 +4143,11 @@
 
     // Startup Initialization
     function init() {
+      loadBranchSettings();
       loadDiscountSettings();
       renderRailCategories();
       renderPopularCombos();
+      renderBranchPill();
       renderPatientPill();
       renderOperatorPill();
       renderDrilldownCatalog();
