@@ -197,6 +197,11 @@ test('Diagnostic POS API test suite', async (t) => {
     assert.equal(credRes.statusCode, 200);
     assert.equal(credRes.body.user.role, 'admin');
 
+    // Login with username & password
+    const userRes = await mockCall(router, 'POST', '/api/auth/login', { username: 'cashier', password: 'Cashier@1234' });
+    assert.equal(userRes.statusCode, 200);
+    assert.equal(userRes.body.user.role, 'operator');
+
     // Reject wrong PIN
     const failRes = await mockCall(router, 'POST', '/api/auth/login', { pin: '0000' });
     assert.equal(failRes.statusCode, 401);

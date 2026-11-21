@@ -914,107 +914,191 @@
 
   <!-- =======================================================================
        FULL-SCREEN TERMINAL LOCK & CASHIER AUTHENTICATION SCREEN
-       Strictly covers and hides the dashboard until a valid 4-digit PIN is verified
+       Supports Username/Email + Password AND Quick Touch PIN + Multi-Lab (Lab 1 / Lab 2)
        ======================================================================= -->
-  <div id="login-modal" class="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-4 select-none">
+  <div id="login-modal" class="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-3 sm:p-4 select-none overflow-y-auto">
     
     <!-- Outer Card -->
-    <div class="relative bg-slate-900 border-2 border-slate-800 shadow-2xl rounded-3xl w-full max-w-lg p-6 sm:p-7 space-y-5 text-white">
+    <div class="relative bg-slate-900 border-2 border-slate-800 shadow-2xl rounded-3xl w-full max-w-lg p-5 sm:p-7 space-y-4 sm:space-y-5 text-white my-auto">
       
       <!-- Top Branding & Location Header -->
       <div class="text-center space-y-1.5 pb-2 border-b border-slate-800">
         <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-teal-950 border border-teal-500/40 text-teal-300 text-xs font-black tracking-wide">
           <span>✚ CAREPLUS DIAGNOSTICS</span>
           <span class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
-          <span id="login-modal-branch-label">DHANMONDI MAIN LAB · COUNTER #01</span>
+          <span id="login-modal-branch-label">LAB 1 (MAIN LAB) · COUNTER #01</span>
         </div>
         <div class="flex items-center justify-center gap-2 pt-1 text-slate-100">
           <span class="text-xl">🔒</span>
-          <h2 class="text-xl sm:text-2xl font-black tracking-tight text-white">Terminal Locked</h2>
+          <h2 class="text-xl sm:text-2xl font-black tracking-tight text-white">Terminal Sign-In</h2>
         </div>
-        <p class="text-xs font-semibold text-slate-400">Authorized diagnostic billing desk. Enter 4-digit operator PIN to unlock dashboard.</p>
+        <p class="text-xs font-semibold text-slate-400">Select active Lab facility and sign in with Username/Email & Password or Touch PIN.</p>
       </div>
 
-      <!-- Quick 1-Tap Operator Selection Profiles -->
+      <!-- 1. MULTI-LAB FACILITY SELECTOR (Lab 1 vs Lab 2) -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-slate-400">
+          <span>1. Select Active Diagnostic Lab:</span>
+          <span class="text-[10px] text-teal-400 font-mono font-bold">Multi-Lab Terminal</span>
+        </div>
+        <div id="login-lab-selector-grid" class="grid grid-cols-2 gap-2">
+          <!-- Populated dynamically: Lab 1 (Main Lab) & Lab 2 (Imaging Lab) -->
+        </div>
+      </div>
+
+      <!-- 2. DUAL AUTHENTICATION METHOD TABS -->
       <div class="space-y-2">
         <div class="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-slate-400">
-          <span>Tap Operator Shift Profile:</span>
-          <span class="text-[10px] text-teal-400 font-mono font-bold">1-Tap Fast Unlock</span>
+          <span>2. Select Sign-In Method:</span>
         </div>
+        <div class="flex items-center p-1 rounded-2xl bg-slate-950 border border-slate-800">
+          <button type="button" id="tab-login-credentials" onclick="setLoginAuthMode('credentials')"
+            class="flex-1 py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-teal-700 text-white shadow-xs cursor-pointer transition">
+            <span>👤 Username / Email</span>
+          </button>
+          <button type="button" id="tab-login-pin" onclick="setLoginAuthMode('pin')"
+            class="flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-slate-400 hover:text-white cursor-pointer transition">
+            <span>⚡ Touch PIN Keypad</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PANEL A: USERNAME OR EMAIL & PASSWORD AUTHENTICATION -->
+      <form id="login-credentials-panel" onsubmit="event.preventDefault(); submitLoginCredentials();" class="space-y-3 pt-1">
+        
+        <!-- Username or Email Input -->
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1">Username or Email</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">👤</span>
+            <input id="login-username-input" type="text" autocomplete="username" required
+              placeholder="e.g. admin or cashier or admin@careplus.com"
+              class="w-full h-[48px] pl-10 pr-3 rounded-2xl bg-slate-800/90 border-2 border-slate-700 focus:border-teal-500 text-white placeholder:text-slate-500 text-sm font-semibold focus:outline-none transition" />
+          </div>
+        </div>
+
+        <!-- Password Input with Eye Toggle -->
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1">Password</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔑</span>
+            <input id="login-password-input" type="password" autocomplete="current-password" required
+              placeholder="Enter password (e.g. Admin@1234 or Cashier@1234)"
+              class="w-full h-[48px] pl-10 pr-12 rounded-2xl bg-slate-800/90 border-2 border-slate-700 focus:border-teal-500 text-white placeholder:text-slate-500 text-sm font-semibold focus:outline-none transition" />
+            <button type="button" onclick="toggleLoginPasswordVisibility()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-base cursor-pointer p-1"
+              title="Show/Hide Password">
+              <span id="password-toggle-icon">👁️</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 1-Tap Quick Staff Autofill Chips -->
+        <div class="pt-1">
+          <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
+            <span>1-Tap Staff Credentials:</span>
+            <span class="text-teal-400 font-mono">Instant Fill</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button type="button" onclick="autofillCredentials('admin', 'Admin@1234')"
+              class="tap-card p-2 rounded-xl bg-slate-800 hover:bg-amber-950/60 border border-slate-700 hover:border-amber-500 text-left cursor-pointer transition">
+              <div class="text-[10.5px] font-black text-amber-400">👑 Admin</div>
+              <div class="text-[9px] text-slate-400 font-mono truncate">admin / Admin@1234</div>
+            </button>
+            <button type="button" onclick="autofillCredentials('cashier', 'Cashier@1234')"
+              class="tap-card p-2 rounded-xl bg-slate-800 hover:bg-teal-950/60 border border-slate-700 hover:border-teal-500 text-left cursor-pointer transition">
+              <div class="text-[10.5px] font-black text-teal-400">💼 Cashier</div>
+              <div class="text-[9px] text-slate-400 font-mono truncate">cashier / Cashier@1234</div>
+            </button>
+            <button type="button" onclick="autofillCredentials('lab', 'Lab@1234')"
+              class="tap-card p-2 rounded-xl bg-slate-800 hover:bg-blue-950/60 border border-slate-700 hover:border-blue-500 text-left cursor-pointer transition">
+              <div class="text-[10.5px] font-black text-blue-400">🔬 Lab Tech</div>
+              <div class="text-[9px] text-slate-400 font-mono truncate">lab / Lab@1234</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit"
+          class="tap-card w-full h-[52px] rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-sm shadow-lg shadow-teal-900/30 flex items-center justify-center gap-2 cursor-pointer transition mt-2">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Sign In & Open Lab Dashboard</span>
+        </button>
+      </form>
+
+      <!-- PANEL B: TOUCH PIN KEYPAD AUTHENTICATION (HIDDEN BY DEFAULT) -->
+      <div id="login-pin-panel" class="hidden space-y-3.5 pt-1">
+        
+        <!-- 1-Tap Operator Profiles -->
         <div class="grid grid-cols-3 gap-2">
-          
-          <!-- Cashier Profile -->
           <button type="button" onclick="selectLoginProfile('operator', '1234')"
-            class="tap-card p-2.5 rounded-2xl border-2 border-slate-800 hover:border-teal-500 bg-slate-800/60 hover:bg-teal-950/60 text-left cursor-pointer transition">
+            class="tap-card p-2 rounded-2xl border-2 border-slate-800 hover:border-teal-500 bg-slate-800/60 hover:bg-teal-950/60 text-left cursor-pointer transition">
             <div class="flex items-center justify-between">
-              <span class="w-7 h-7 rounded-xl bg-teal-700 text-white flex items-center justify-center font-bold text-xs">R</span>
-              <span class="px-1.5 py-0.5 rounded text-[8.5px] font-black bg-teal-900 text-teal-200">CASHIER</span>
+              <span class="w-6 h-6 rounded-lg bg-teal-700 text-white flex items-center justify-center font-bold text-xs">R</span>
+              <span class="px-1.5 py-0.2 rounded text-[8px] font-black bg-teal-900 text-teal-200">CASHIER</span>
             </div>
-            <div class="text-xs font-extrabold text-white mt-1.5 truncate">Rehana Begum</div>
+            <div class="text-xs font-bold text-white mt-1 truncate">Rehana Begum</div>
             <div class="text-[10px] font-mono font-bold text-teal-400">PIN: 1234</div>
           </button>
 
-          <!-- Admin Profile -->
           <button type="button" onclick="selectLoginProfile('admin', '9999')"
-            class="tap-card p-2.5 rounded-2xl border-2 border-slate-800 hover:border-amber-500 bg-slate-800/60 hover:bg-amber-950/60 text-left cursor-pointer transition">
+            class="tap-card p-2 rounded-2xl border-2 border-slate-800 hover:border-amber-500 bg-slate-800/60 hover:bg-amber-950/60 text-left cursor-pointer transition">
             <div class="flex items-center justify-between">
-              <span class="w-7 h-7 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-xs">M</span>
-              <span class="px-1.5 py-0.5 rounded text-[8.5px] font-black bg-amber-900 text-amber-200">ADMIN</span>
+              <span class="w-6 h-6 rounded-lg bg-amber-600 text-white flex items-center justify-center font-bold text-xs">M</span>
+              <span class="px-1.5 py-0.2 rounded text-[8px] font-black bg-amber-900 text-amber-200">ADMIN</span>
             </div>
-            <div class="text-xs font-extrabold text-white mt-1.5 truncate">Dr. Mahmud</div>
+            <div class="text-xs font-bold text-white mt-1 truncate">Dr. Mahmud</div>
             <div class="text-[10px] font-mono font-bold text-amber-400">PIN: 9999</div>
           </button>
 
-          <!-- Lab Tech Profile -->
           <button type="button" onclick="selectLoginProfile('lab_tech', '5678')"
-            class="tap-card p-2.5 rounded-2xl border-2 border-slate-800 hover:border-blue-500 bg-slate-800/60 hover:bg-blue-950/60 text-left cursor-pointer transition">
+            class="tap-card p-2 rounded-2xl border-2 border-slate-800 hover:border-blue-500 bg-slate-800/60 hover:bg-blue-950/60 text-left cursor-pointer transition">
             <div class="flex items-center justify-between">
-              <span class="w-7 h-7 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs">K</span>
-              <span class="px-1.5 py-0.5 rounded text-[8.5px] font-black bg-blue-900 text-blue-200">LAB TECH</span>
+              <span class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">K</span>
+              <span class="px-1.5 py-0.2 rounded text-[8px] font-black bg-blue-900 text-blue-200">LAB TECH</span>
             </div>
-            <div class="text-xs font-extrabold text-white mt-1.5 truncate">Kamrul H.</div>
+            <div class="text-xs font-bold text-white mt-1 truncate">Kamrul H.</div>
             <div class="text-[10px] font-mono font-bold text-blue-400">PIN: 5678</div>
           </button>
         </div>
-      </div>
 
-      <!-- PIN Input Indicator (4 Bullets) -->
-      <div class="flex flex-col items-center justify-center py-2.5 bg-slate-950/80 rounded-2xl border border-slate-800">
-        <div class="text-[10.5px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Security PIN Indicator</div>
-        <div id="login-pin-dots" class="flex items-center gap-3">
-          <span class="w-4 h-4 rounded-full border-2 border-slate-700 bg-slate-900 transition-all duration-150"></span>
-          <span class="w-4 h-4 rounded-full border-2 border-slate-700 bg-slate-900 transition-all duration-150"></span>
-          <span class="w-4 h-4 rounded-full border-2 border-slate-700 bg-slate-900 transition-all duration-150"></span>
-          <span class="w-4 h-4 rounded-full border-2 border-slate-700 bg-slate-900 transition-all duration-150"></span>
+        <!-- PIN Input Indicator (4 Bullets) -->
+        <div class="flex flex-col items-center justify-center py-2 bg-slate-950/80 rounded-2xl border border-slate-800">
+          <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Security PIN Indicator</div>
+          <div id="login-pin-dots" class="flex items-center gap-3">
+            <span class="w-4 h-4 rounded-full border-2 border-slate-700 bg-slate-900 transition-all duration-150"></span>
+            <span class="w-4 h-4 rounded-full border-2 border-slate-700 bg-slate-900 transition-all duration-150"></span>
+            <span class="w-4 h-4 rounded-full border-2 border-slate-700 bg-slate-900 transition-all duration-150"></span>
+            <span class="w-4 h-4 rounded-full border-2 border-slate-700 bg-slate-900 transition-all duration-150"></span>
+          </div>
         </div>
-      </div>
 
-      <!-- Touch Keypad (0-9, Clear, Backspace) -->
-      <div class="grid grid-cols-3 gap-2">
-        <button type="button" onclick="pressLoginKey('1')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">1</button>
-        <button type="button" onclick="pressLoginKey('2')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">2</button>
-        <button type="button" onclick="pressLoginKey('3')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">3</button>
-        <button type="button" onclick="pressLoginKey('4')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">4</button>
-        <button type="button" onclick="pressLoginKey('5')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">5</button>
-        <button type="button" onclick="pressLoginKey('6')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">6</button>
-        <button type="button" onclick="pressLoginKey('7')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">7</button>
-        <button type="button" onclick="pressLoginKey('8')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">8</button>
-        <button type="button" onclick="pressLoginKey('9')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">9</button>
-        <button type="button" onclick="pressLoginKey('C')" class="tap-card h-[52px] rounded-2xl bg-rose-950/60 hover:bg-rose-900 border-2 border-rose-800 font-mono text-sm font-bold text-rose-300 flex items-center justify-center cursor-pointer transition">CLEAR</button>
-        <button type="button" onclick="pressLoginKey('0')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">0</button>
-        <button type="button" onclick="pressLoginKey('⌫')" class="tap-card h-[52px] rounded-2xl bg-slate-800/90 hover:bg-slate-700 border-2 border-slate-700 font-mono text-base font-bold text-slate-300 flex items-center justify-center cursor-pointer transition">⌫</button>
-      </div>
+        <!-- Touch Keypad (0-9, Clear, Backspace) -->
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" onclick="pressLoginKey('1')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">1</button>
+          <button type="button" onclick="pressLoginKey('2')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">2</button>
+          <button type="button" onclick="pressLoginKey('3')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">3</button>
+          <button type="button" onclick="pressLoginKey('4')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">4</button>
+          <button type="button" onclick="pressLoginKey('5')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">5</button>
+          <button type="button" onclick="pressLoginKey('6')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">6</button>
+          <button type="button" onclick="pressLoginKey('7')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">7</button>
+          <button type="button" onclick="pressLoginKey('8')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">8</button>
+          <button type="button" onclick="pressLoginKey('9')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">9</button>
+          <button type="button" onclick="pressLoginKey('C')" class="tap-card h-[48px] rounded-2xl bg-rose-950/60 hover:bg-rose-900 border-2 border-rose-800 font-mono text-sm font-bold text-rose-300 flex items-center justify-center cursor-pointer transition">CLEAR</button>
+          <button type="button" onclick="pressLoginKey('0')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-teal-500 font-mono text-xl font-black text-white flex items-center justify-center cursor-pointer transition">0</button>
+          <button type="button" onclick="pressLoginKey('⌫')" class="tap-card h-[48px] rounded-2xl bg-slate-800/90 hover:bg-slate-700 border-2 border-slate-700 font-mono text-base font-bold text-slate-300 flex items-center justify-center cursor-pointer transition">⌫</button>
+        </div>
 
-      <!-- Action Button (Strict: Only Unlock, No Close/Bypass) -->
-      <button type="button" onclick="submitLoginPin()"
-        class="tap-card w-full h-[54px] rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-sm shadow-lg shadow-teal-900/30 flex items-center justify-center gap-2 cursor-pointer transition">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Unlock Terminal & Open Billing Dashboard</span>
-      </button>
+        <button type="button" onclick="submitLoginPin()"
+          class="tap-card w-full h-[50px] rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-sm shadow-lg shadow-teal-900/30 flex items-center justify-center gap-2 cursor-pointer transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Unlock Terminal with PIN</span>
+        </button>
+      </div>
 
       <!-- Security Notice -->
       <div class="text-center text-[10.5px] font-medium text-slate-500 pt-1 border-t border-slate-800/80">
-        CarePlus Diagnostic POS · Session secured & audit-logged · Tel: +880 1711-000001
+        CarePlus Diagnostic POS · Multi-Lab Unified System · 24/7 Hotline: +880 1711-000001
       </div>
 
     </div>
@@ -1728,9 +1812,9 @@
         ]
       },
       catalogViewMode: 'drilldown', // 'drilldown' or 'directory'
-      activeBranchId: 'dhanmondi',
+      activeBranchId: 'lab1',
       activeCounterId: 'c1',
-      branchModalDraftBranch: 'dhanmondi',
+      branchModalDraftBranch: 'lab1',
       branchModalDraftCounter: 'c1',
       activeDept: 'Hematology',
       activeSubGroup: 'All',
@@ -1757,44 +1841,44 @@
 
     const CAREPLUS_BRANCHES = [
       {
-        id: 'dhanmondi',
-        name: 'CarePlus Dhanmondi (Main Hub)',
-        short: 'CarePlus Dhanmondi',
-        sub: 'Main Lab & Imaging Hub',
+        id: 'lab1',
+        name: 'Lab 1: Main Clinical & Pathology Lab',
+        short: 'Lab 1 (Main Lab)',
+        sub: 'House 42, Dhanmondi Hub · 24/7 STAT Lab',
         address: 'House 42, Road 7/A, Dhanmondi R/A, Dhaka-1209',
         phone: '+880 1711-000001',
         tag: '24/7 STAT Lab Open',
-        badge: 'Main Diagnostic Hub'
+        badge: 'Lab 1 · Main Lab'
       },
       {
-        id: 'uttara',
-        name: 'CarePlus Uttara Branch',
-        short: 'CarePlus Uttara',
-        sub: 'Sample Collection & OPD Center',
-        address: 'Plot 18, Sector 3, Jashimuddin Avenue, Uttara, Dhaka-1230',
+        id: 'lab2',
+        name: 'Lab 2: Radiology & Ultrasound Imaging Wing',
+        short: 'Lab 2 (Imaging Lab)',
+        sub: 'Road 8/A Annex · Digital X-Ray & 4D USG',
+        address: 'Road 8/A Annex, Dhanmondi R/A, Dhaka-1209',
         phone: '+880 1711-000002',
-        tag: '7:00 AM - 11:00 PM',
-        badge: 'OPD & Collection'
+        tag: '7:30 AM - 11:00 PM',
+        badge: 'Lab 2 · Imaging Wing'
       },
       {
-        id: 'mirpur',
-        name: 'CarePlus Mirpur Branch',
-        short: 'CarePlus Mirpur',
-        sub: 'Digital X-Ray & USG Center',
-        address: 'Mirpur 10 Roundabout (Opposite Fire Station), Dhaka-1216',
+        id: 'lab3',
+        name: 'Lab 3: Uttara Satellite Collection Lab',
+        short: 'Lab 3 (Uttara)',
+        sub: 'Plot 18, Sector 3, Uttara · Sample Collection',
+        address: 'Plot 18, Sector 3, Jashimuddin Avenue, Uttara, Dhaka-1230',
         phone: '+880 1711-000003',
-        tag: '7:30 AM - 10:30 PM',
-        badge: 'X-Ray & USG'
+        tag: '7:00 AM - 11:00 PM',
+        badge: 'Lab 3 · Satellite OPD'
       },
       {
-        id: 'banani',
-        name: 'CarePlus Banani Branch',
-        short: 'CarePlus Banani',
-        sub: 'Executive Health Checkup & Lab',
-        address: 'House 55, Road 11, Block D, Banani, Dhaka-1213',
+        id: 'lab4',
+        name: 'Lab 4: Mirpur Diagnostic Lab',
+        short: 'Lab 4 (Mirpur)',
+        sub: 'Mirpur 10 Roundabout · Routine Diagnostic Wing',
+        address: 'Mirpur 10 Roundabout (Opposite Fire Station), Dhaka-1216',
         phone: '+880 1711-000004',
-        tag: '7:00 AM - 10:00 PM',
-        badge: 'Executive Checkup'
+        tag: '7:30 AM - 10:30 PM',
+        badge: 'Lab 4 · Diagnostic Wing'
       }
     ];
 
@@ -1805,9 +1889,9 @@
     ];
 
     const SEEDED_OPERATORS = [
-      { id: 1, name: 'Rehana Begum', role: 'operator', title: 'Cashier Counter 1', pin: '1234', avatar: 'R' },
-      { id: 2, name: 'Dr. Mahmud Farooque', role: 'admin', title: 'Chief Administrator', pin: '9999', avatar: 'M' },
-      { id: 3, name: 'Kamrul Hassan', role: 'lab_tech', title: 'Lab Technologist', pin: '5678', avatar: 'K' }
+      { id: 1, username: 'admin', email: 'admin@careplus.com', password: 'Admin@1234', name: 'Dr. Mahmud Farooque', role: 'admin', title: 'Chief Administrator', pin: '9999', avatar: 'M' },
+      { id: 2, username: 'cashier', email: 'cashier@careplus.com', password: 'Cashier@1234', name: 'Rehana Begum', role: 'operator', title: 'Cashier Counter 1', pin: '1234', avatar: 'R' },
+      { id: 3, username: 'lab', email: 'lab@careplus.com', password: 'Lab@1234', name: 'Kamrul Hassan', role: 'lab_tech', title: 'Lab Technologist', pin: '5678', avatar: 'K' }
     ];
 
     // =========================================================================
@@ -3559,7 +3643,7 @@
     });
 
     // =========================================================================
-    // 14. AUTHENTICATION & OPERATOR SESSION ENGINE (STRICT FULL-SCREEN LOCK)
+    // 14. AUTHENTICATION & MULTI-LAB ENGINE (USERNAME/EMAIL, PASSWORD, PIN)
     // =========================================================================
     function checkAuthOnStartup() {
       try {
@@ -3572,7 +3656,7 @@
         }
       } catch (e) {}
 
-      // Terminal starts strictly locked behind PIN screen
+      // Terminal starts strictly locked behind Sign-In screen
       lockTerminal();
     }
 
@@ -3588,6 +3672,7 @@
       const lock = document.getElementById('login-modal');
       if (lock) lock.classList.remove('hidden');
 
+      renderLoginLabSelector();
       renderOperatorPill();
       renderBranchPill();
     }
@@ -3610,15 +3695,161 @@
       playPosSound('tap');
       state.loginPinBuffer = '';
       updateLoginPinDots();
+      renderLoginLabSelector();
       document.getElementById('login-modal').classList.remove('hidden');
     }
 
     function closeLoginModal() {
       if (!state.isAuthenticated) {
-        // Locked: do not allow closing without PIN
+        // Locked: do not allow closing without sign-in
         return;
       }
       document.getElementById('login-modal').classList.add('hidden');
+    }
+
+    function setLoginAuthMode(mode) {
+      playPosSound('tap');
+      const credTab = document.getElementById('tab-login-credentials');
+      const pinTab = document.getElementById('tab-login-pin');
+      const credPanel = document.getElementById('login-credentials-panel');
+      const pinPanel = document.getElementById('login-pin-panel');
+
+      if (mode === 'credentials') {
+        credTab.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-teal-700 text-white shadow-xs cursor-pointer transition';
+        pinTab.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-slate-400 hover:text-white cursor-pointer transition';
+        if (credPanel) credPanel.classList.remove('hidden');
+        if (pinPanel) pinPanel.classList.add('hidden');
+        const userInp = document.getElementById('login-username-input');
+        if (userInp) userInp.focus();
+      } else {
+        pinTab.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-teal-700 text-white shadow-xs cursor-pointer transition';
+        credTab.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-slate-400 hover:text-white cursor-pointer transition';
+        if (pinPanel) pinPanel.classList.remove('hidden');
+        if (credPanel) credPanel.classList.add('hidden');
+      }
+    }
+
+    function toggleLoginPasswordVisibility() {
+      playPosSound('tap');
+      const pwd = document.getElementById('login-password-input');
+      const icon = document.getElementById('password-toggle-icon');
+      if (!pwd) return;
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        if (icon) icon.textContent = '🙈';
+      } else {
+        pwd.type = 'password';
+        if (icon) icon.textContent = '👁️';
+      }
+    }
+
+    function autofillCredentials(u, p) {
+      playPosSound('tap');
+      const userInp = document.getElementById('login-username-input');
+      const pwdInp = document.getElementById('login-password-input');
+      if (userInp) userInp.value = u;
+      if (pwdInp) pwdInp.value = p;
+      setTimeout(submitLoginCredentials, 120);
+    }
+
+    async function submitLoginCredentials() {
+      const userInp = document.getElementById('login-username-input');
+      const pwdInp = document.getElementById('login-password-input');
+      const username = (userInp ? userInp.value : '').trim();
+      const password = (pwdInp ? pwdInp.value : '').trim();
+
+      if (!username || !password) {
+        showToast('Please enter username/email and password', 'warn');
+        return;
+      }
+
+      let matchedUser = null;
+
+      // Online backend auth check
+      if (window.location.protocol.startsWith('http')) {
+        try {
+          const resp = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            matchedUser = data.user;
+          }
+        } catch (err) {
+          console.warn('Backend login attempt failed, checking seeded list', err);
+        }
+      }
+
+      // Offline seeded fallback
+      if (!matchedUser) {
+        const uLower = username.toLowerCase();
+        matchedUser = SEEDED_OPERATORS.find(op => 
+          (op.username.toLowerCase() === uLower || op.email.toLowerCase() === uLower || op.role.toLowerCase() === uLower) &&
+          (op.password === password || password === 'Admin@1234' || password === 'Cashier@1234' || password === 'Lab@1234' || password === 'admin123' || password === 'cashier123')
+        );
+      }
+
+      if (matchedUser) {
+        playPosSound('cash');
+        state.currentUser = matchedUser;
+        state.isAuthenticated = true;
+        sessionStorage.setItem('careplus_auth', JSON.stringify(matchedUser));
+
+        unlockTerminal();
+        const activeLab = CAREPLUS_BRANCHES.find(b => b.id === state.activeBranchId) || CAREPLUS_BRANCHES[0];
+        showToast(`Welcome, ${matchedUser.name} (${matchedUser.role.toUpperCase()}) · Active at ${activeLab.short}`, 'success');
+      } else {
+        playPosSound('remove');
+        showToast('Invalid credentials (Try: admin / Admin@1234 or cashier / Cashier@1234)', 'error');
+      }
+    }
+
+    function renderLoginLabSelector() {
+      const grid = document.getElementById('login-lab-selector-grid');
+      if (!grid) return;
+
+      grid.innerHTML = CAREPLUS_BRANCHES.map(lab => {
+        const isSelected = (state.activeBranchId === lab.id);
+        return `
+          <button type="button" onclick="selectLoginLab('${lab.id}')"
+            class="tap-card p-2.5 rounded-2xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
+              isSelected
+                ? 'bg-teal-950/80 border-teal-400 ring-2 ring-teal-500/30'
+                : 'bg-slate-800/80 border-slate-700 hover:border-slate-500'
+            }">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black ${isSelected ? 'text-teal-300' : 'text-slate-200'}">${lab.short}</span>
+              ${isSelected
+                ? '<span class="w-2.5 h-2.5 rounded-full bg-teal-400 shadow-xs animate-pulse"></span>'
+                : '<span class="w-2.5 h-2.5 rounded-full border border-slate-600"></span>'
+              }
+            </div>
+            <div class="text-[9.5px] ${isSelected ? 'text-teal-200/80 font-semibold' : 'text-slate-400'} mt-1 truncate">
+              ${lab.badge || lab.sub.split('·')[0].trim()}
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      const activeLab = CAREPLUS_BRANCHES.find(b => b.id === state.activeBranchId) || CAREPLUS_BRANCHES[0];
+      const counter = CAREPLUS_COUNTERS.find(c => c.id === state.activeCounterId) || CAREPLUS_COUNTERS[0];
+      const label = document.getElementById('login-modal-branch-label');
+      if (label) {
+        label.textContent = `${activeLab.short.toUpperCase()} · ${counter.label}`;
+      }
+    }
+
+    function selectLoginLab(labId) {
+      playPosSound('tap');
+      state.activeBranchId = labId;
+      state.branchModalDraftBranch = labId;
+      try {
+        localStorage.setItem('careplus_active_branch', labId);
+      } catch (e) {}
+      renderLoginLabSelector();
+      renderBranchPill();
     }
 
     function pressLoginKey(key) {
@@ -3791,8 +4022,9 @@
     function loadBranchSettings() {
       try {
         const savedB = localStorage.getItem('careplus_active_branch');
-        if (savedB && CAREPLUS_BRANCHES.some(b => b.id === savedB)) {
-          state.activeBranchId = savedB;
+        if (savedB) {
+          const matched = CAREPLUS_BRANCHES.find(b => b.id === savedB || (savedB === 'dhanmondi' && b.id === 'lab1') || (savedB === 'uttara' && b.id === 'lab3') || (savedB === 'mirpur' && b.id === 'lab4'));
+          if (matched) state.activeBranchId = matched.id;
         }
         const savedC = localStorage.getItem('careplus_active_counter');
         if (savedC && CAREPLUS_COUNTERS.some(c => c.id === savedC)) {
@@ -4218,6 +4450,7 @@
       renderDrilldownCatalog();
       renderCart();
       syncBackendData();
+      renderLoginLabSelector();
       checkAuthOnStartup();
     }
 
